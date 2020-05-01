@@ -72,11 +72,11 @@ PACKAGE_PATH      = os.path.abspath(pathlib.Path(__file__).parent)
 BUILD_DIRECTORIES = ["build", "dist", PACKAGE_NAME + ".egg-info"]
 
 
-def clean_distribution_files() -> None:
+def clean_package() -> None:
     
     '''
     
-    Removes source distribution files.
+    Removes source distribution files and Python compiled files.
     
     '''
 
@@ -93,6 +93,18 @@ def clean_distribution_files() -> None:
         else:
             
             print(f"\tDirectory not found: {path}")
+            
+    for root, directories, files in os.walk(PACKAGE_PATH):
+        
+        for directory in directories:
+                        
+            if directory == "__pycache__":
+                
+                path = os.path.join(root, directory)
+                
+                print(f"\tDeleting directory and contents: {path}")
+                
+                shutil.rmtree(path)
 
 
 if __name__ == "__main__":
@@ -104,7 +116,7 @@ if __name__ == "__main__":
     os.chdir(PACKAGE_PATH)
     
     print("Cleaning up old source distribution files...", end = "\n\n")
-    clean_distribution_files()
+    clean_package()
     
     print("\n" + "-" * 79, end = "\n\n")
     print("Generating source distribution...", end = "\n\n")
@@ -133,4 +145,4 @@ if __name__ == "__main__":
     
     print("\n" + "-" * 79, end = "\n\n")
     print("Cleaning up source distribution files...", end = "\n\n")
-    clean_distribution_files()
+    clean_package()

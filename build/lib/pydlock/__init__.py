@@ -3,7 +3,7 @@
 
 '''
 
-A package for encrypting files with a password.
+A package for locking files with a password.
 
 Software:      Pydlock
 Author:        Erick Edward Shepherd
@@ -15,7 +15,7 @@ Last modified: 2020-04-30
 
 Description:
     
-    A package for encrypting files with a password.
+    A package for locking files with a password.
 
 
 Usage:

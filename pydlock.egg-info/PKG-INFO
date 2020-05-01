@@ -1,6 +1,6 @@
 Metadata-Version: 1.2
 Name: pydlock
-Version: 1.2.0.9
+Version: 1.2.0.10
 Summary: A package for encrypting files with a password.
 Home-page: https://www.github.com/ErickShepherd/pydlock
 Author: Erick Edward Shepherd
@@ -30,7 +30,7 @@ Description: *******
         ============
         
         **pydlock** is available on the Python Package Index (PyPI) at
-        https://pypi.org/project/pydlock/. To install **pydlock**, simply use the
+        https://pypi.org/project/pydlock. To install **pydlock**, simply use the
         Python :code:`pip` installer:
         
         .. code-block:: console

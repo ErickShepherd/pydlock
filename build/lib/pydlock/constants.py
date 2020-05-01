@@ -59,7 +59,7 @@ VERSION = {
     "major"       : 1,  # For milestones relative to past major versions.
     "minor"       : 2,  # For new features or functionalities.
     "maintenance" : 0,  # For bug fixes.
-    "build"       : 9   # For all changes, including those to documentation.
+    "build"       : 10  # For all changes, including those to documentation.
 }
 
 DEFAULT_ENCODING = "utf-8"

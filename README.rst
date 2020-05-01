@@ -31,7 +31,7 @@ Usage
 From the command line
 ---------------------
 
-To access the :code:`help` method of the script:
+To access the :code:`help` method of the script, use :code:`python -m pydlock -h`:
 
 .. code-block:: console
 

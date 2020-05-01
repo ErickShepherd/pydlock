@@ -66,11 +66,35 @@ To decrypt a file, use :code:`python -m pydlock unlock [file]`:
 
 .. code-block:: console
     
+    user@computer:~$ cat secret.txt
+    gAAAAABeqx971nHtXHi4dJYw8A_m_1mRYT8V2Sy4XPLqdg0t4mp9ooN-aTU1fuPQwEpwnuFiAfbJ6oPaN9IB1gzFT5-Tb4gFXQMw5uQUXDYV2Pvso6E5lXQ=
+    
     user@computer:~$ python -m pydlock unlock secret.txt
     Enter password:
 
     user@computer:~$ cat secret.txt
     Shh! It's a secret!
+    
+To run an encrypted Python file, use :code:`python -m pydlock python [file]`:
+
+.. code-block:: console
+
+    user@computer:~$ cat hello_world.py
+    print("Hello world!")
+
+    user@computer:~$ python -m pydlock lock hello_world.py
+    Enter password:
+    Re-enter password:
+
+    user@computer:~$ cat hello_world.py
+    gAAAAABeq6fM4Qxm0TB9cGIg6G-uNprWIAyPmuciugNGIvPxudmBgkIWGhlV3Lg7RyMRdUVODRCehxWXnS5zhSm6fDZ0Ct57XYPztYi_9DZHp0sO1rXuyCE=
+
+    user@computer:~$ python -m pydlock python hello_world.py
+    Enter password:
+    Hello world!
+
+    user@computer:~$ cat hello_world.py
+    gAAAAABeq6fM4Qxm0TB9cGIg6G-uNprWIAyPmuciugNGIvPxudmBgkIWGhlV3Lg7RyMRdUVODRCehxWXnS5zhSm6fDZ0Ct57XYPztYi_9DZHp0sO1rXuyCE=
 
 
 In other Python modules

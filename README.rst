@@ -37,7 +37,7 @@ To access the :code:`help` method of the script:
 
     user@computer:~$ python -m pydlock -h
     usage: __main__.py [-h] [--arguments ARGUMENTS] [--encoding ENCODING]
-        {lock,unlock,python,run} file
+                       {lock,unlock,python,run} file
 
     positional arguments:
         {lock,unlock,python,run}
@@ -48,7 +48,7 @@ To access the :code:`help` method of the script:
         --arguments ARGUMENTS
         --encoding ENCODING
 
-To encrypt a file:
+To encrypt a file, use :code:`python -m pydlock lock [file]`:
 
 .. code-block:: console
 
@@ -62,7 +62,7 @@ To encrypt a file:
     user@computer:~$ cat secret.txt
     gAAAAABeqx971nHtXHi4dJYw8A_m_1mRYT8V2Sy4XPLqdg0t4mp9ooN-aTU1fuPQwEpwnuFiAfbJ6oPaN9IB1gzFT5-Tb4gFXQMw5uQUXDYV2Pvso6E5lXQ=
 
-To decrypt a file:
+To decrypt a file, use :code:`python -m pydlock unlock [file]`:
 
 .. code-block:: console
     

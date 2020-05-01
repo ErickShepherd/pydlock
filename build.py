@@ -89,6 +89,10 @@ def clean_distribution_files() -> None:
             print(f"\tDeleting directory and contents: {path}")
             
             shutil.rmtree(path)
+            
+        else:
+            
+            print(f"\tDirectory not found: {path}")
 
 
 if __name__ == "__main__":
@@ -126,6 +130,7 @@ if __name__ == "__main__":
         
         print("")
         subprocess.run("python -m twine upload dist/*")
-        
+    
+    print("\n" + "-" * 79, end = "\n\n")
     print("Cleaning up source distribution files...", end = "\n\n")
     clean_distribution_files()

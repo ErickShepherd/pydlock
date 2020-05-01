@@ -71,16 +71,15 @@ PACKAGE_NAME      = "pydlock"
 PACKAGE_PATH      = os.path.abspath(pathlib.Path(__file__).parent)
 BUILD_DIRECTORIES = ["build", "dist", PACKAGE_NAME + ".egg-info"]
 
-if __name__ == "__main__":
+
+def clean_distribution_files() -> None:
     
-    print("-" * 79, end = "\n\n")
-    print("Beginning to build the source distribution...")
-    print("\n" + "-" * 79, end = "\n\n")
+    '''
     
-    os.chdir(PACKAGE_PATH)
+    Removes source distribution files.
     
-    print("Cleaning up old source distributions...", end = "\n\n")
-    
+    '''
+
     for directory in BUILD_DIRECTORIES:
         
         path = os.path.join(PACKAGE_PATH, directory)
@@ -90,6 +89,18 @@ if __name__ == "__main__":
             print(f"\tDeleting directory and contents: {path}")
             
             shutil.rmtree(path)
+
+
+if __name__ == "__main__":
+    
+    print("-" * 79, end = "\n\n")
+    print("Beginning to build the source distribution...")
+    print("\n" + "-" * 79, end = "\n\n")
+    
+    os.chdir(PACKAGE_PATH)
+    
+    print("Cleaning up old source distribution files...", end = "\n\n")
+    clean_distribution_files()
     
     print("\n" + "-" * 79, end = "\n\n")
     print("Generating source distribution...", end = "\n\n")
@@ -115,3 +126,6 @@ if __name__ == "__main__":
         
         print("")
         subprocess.run("python -m twine upload dist/*")
+        
+    print("Cleaning up source distribution files...", end = "\n\n")
+    clean_distribution_files()

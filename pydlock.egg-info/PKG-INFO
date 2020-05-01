@@ -1,0 +1,418 @@
+Metadata-Version: 1.2
+Name: pydlock
+Version: 1.2.0.9
+Summary: A package for encrypting files with a password.
+Home-page: https://www.github.com/ErickShepherd/pydlock
+Author: Erick Edward Shepherd
+Author-email: Contact@ErickShepherd.com
+Maintainer: Erick Edward Shepherd
+Maintainer-email: Contact@ErickShepherd.com
+License: MIT
+Download-URL: https://pypi.org/project/pydlock/
+Project-URL: Bug Tracker, https://github.com/ErickShepherd/pydlock/issues
+Project-URL: Source Code, https://github.com/ErickShepherd/pydlock
+Project-URL: Documentation, https://github.com/ErickShepherd/pydlock/blob/master/README.rst
+Description: *******
+        Pydlock
+        *******
+        
+        ===========
+        Description
+        ===========
+        
+        **pydlock** is a simple Python package for encrypting and decrypting files. It
+        can be used either as a package imported into other Python modules or as a
+        command line script.
+        
+        
+        ============
+        Installation
+        ============
+        
+        **pydlock** is available on the Python Package Index (PyPI) at
+        https://pypi.org/project/pydlock/. To install **pydlock**, simply use the
+        Python :code:`pip` installer:
+        
+        .. code-block:: console
+           
+            pip install pydlock
+        
+        
+        =====
+        Usage
+        =====
+        
+        From the command line
+        ---------------------
+        
+        To access the :code:`help` method of the script:
+        
+        .. code-block:: console
+        
+            user@computer:~$ python -m pydlock -h
+            usage: __main__.py [-h] [--arguments ARGUMENTS] [--encoding ENCODING]
+                {lock,unlock,python,run} file
+        
+            positional arguments:
+                {lock,unlock,python,run}
+                file
+        
+            optional arguments:
+                -h, --help            show this help message and exit
+                --arguments ARGUMENTS
+                --encoding ENCODING
+        
+        To encrypt a file:
+        
+        .. code-block:: console
+        
+            user@computer:~$ cat secret.txt
+            Shh! It's a secret!
+        
+            user@computer:~$ python -m pydlock lock secret.txt
+            Enter password:
+            Re-enter password:
+        
+            user@computer:~$ cat secret.txt
+            gAAAAABeqx971nHtXHi4dJYw8A_m_1mRYT8V2Sy4XPLqdg0t4mp9ooN-aTU1fuPQwEpwnuFiAfbJ6oPaN9IB1gzFT5-Tb4gFXQMw5uQUXDYV2Pvso6E5lXQ=
+        
+        To decrypt a file:
+        
+        .. code-block:: console
+            
+            user@computer:~$ python -m pydlock unlock secret.txt
+            Enter password:
+        
+            user@computer:~$ cat secret.txt
+            Shh! It's a secret!
+        
+        
+        In other Python modules
+        -----------------------
+        
+        .. code-block:: python
+           
+            import pydlock
+        
+            filename = "secret.txt"
+        
+            with open(filename, "w+") as file:
+        
+                print("Shh! It's a secret!", file = file)
+        
+            pydlock.lock(filename)
+        
+        
+        =====================
+        Copyright and License
+        =====================
+        
+        Copyright
+        ---------
+        
+        Pydlock - A Python file encryption tool.
+            
+        Copyright (c) 2020 of Erick Edward Shepherd, all rights reserved.
+        
+        
+        License
+        -------
+            
+        MIT License
+        
+        Copyright (c) 2020 Erick Edward Shepherd
+        
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+        
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+        
+        THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
+        
+Platform: UNKNOWN
+Classifier: 
+
+Classifier: D
+Classifier: e
+Classifier: v
+Classifier: e
+Classifier: l
+Classifier: o
+Classifier: p
+Classifier: m
+Classifier: e
+Classifier: n
+Classifier: t
+Classifier:  
+Classifier: S
+Classifier: t
+Classifier: a
+Classifier: t
+Classifier: u
+Classifier: s
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: 5
+Classifier:  
+Classifier: -
+Classifier:  
+Classifier: P
+Classifier: r
+Classifier: o
+Classifier: d
+Classifier: u
+Classifier: c
+Classifier: t
+Classifier: i
+Classifier: o
+Classifier: n
+Classifier: /
+Classifier: S
+Classifier: t
+Classifier: a
+Classifier: b
+Classifier: l
+Classifier: e
+Classifier: 
+
+Classifier: N
+Classifier: a
+Classifier: t
+Classifier: u
+Classifier: r
+Classifier: a
+Classifier: l
+Classifier:  
+Classifier: L
+Classifier: a
+Classifier: n
+Classifier: g
+Classifier: u
+Classifier: a
+Classifier: g
+Classifier: e
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: E
+Classifier: n
+Classifier: g
+Classifier: l
+Classifier: i
+Classifier: s
+Classifier: h
+Classifier: 
+
+Classifier: P
+Classifier: r
+Classifier: o
+Classifier: g
+Classifier: r
+Classifier: a
+Classifier: m
+Classifier: m
+Classifier: i
+Classifier: n
+Classifier: g
+Classifier:  
+Classifier: L
+Classifier: a
+Classifier: n
+Classifier: g
+Classifier: u
+Classifier: a
+Classifier: g
+Classifier: e
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: P
+Classifier: y
+Classifier: t
+Classifier: h
+Classifier: o
+Classifier: n
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: 3
+Classifier: 
+
+Classifier: L
+Classifier: i
+Classifier: c
+Classifier: e
+Classifier: n
+Classifier: s
+Classifier: e
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: O
+Classifier: S
+Classifier: I
+Classifier:  
+Classifier: A
+Classifier: p
+Classifier: p
+Classifier: r
+Classifier: o
+Classifier: v
+Classifier: e
+Classifier: d
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: M
+Classifier: I
+Classifier: T
+Classifier:  
+Classifier: L
+Classifier: i
+Classifier: c
+Classifier: e
+Classifier: n
+Classifier: s
+Classifier: e
+Classifier: 
+
+Classifier: O
+Classifier: p
+Classifier: e
+Classifier: r
+Classifier: a
+Classifier: t
+Classifier: i
+Classifier: n
+Classifier: g
+Classifier:  
+Classifier: S
+Classifier: y
+Classifier: s
+Classifier: t
+Classifier: e
+Classifier: m
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: M
+Classifier: i
+Classifier: c
+Classifier: r
+Classifier: o
+Classifier: s
+Classifier: o
+Classifier: f
+Classifier: t
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: W
+Classifier: i
+Classifier: n
+Classifier: d
+Classifier: o
+Classifier: w
+Classifier: s
+Classifier: 
+
+Classifier: O
+Classifier: p
+Classifier: e
+Classifier: r
+Classifier: a
+Classifier: t
+Classifier: i
+Classifier: n
+Classifier: g
+Classifier:  
+Classifier: S
+Classifier: y
+Classifier: s
+Classifier: t
+Classifier: e
+Classifier: m
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: P
+Classifier: O
+Classifier: S
+Classifier: I
+Classifier: X
+Classifier: 
+
+Classifier: O
+Classifier: p
+Classifier: e
+Classifier: r
+Classifier: a
+Classifier: t
+Classifier: i
+Classifier: n
+Classifier: g
+Classifier:  
+Classifier: S
+Classifier: y
+Classifier: s
+Classifier: t
+Classifier: e
+Classifier: m
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: U
+Classifier: n
+Classifier: i
+Classifier: x
+Classifier: 
+
+Classifier: O
+Classifier: p
+Classifier: e
+Classifier: r
+Classifier: a
+Classifier: t
+Classifier: i
+Classifier: n
+Classifier: g
+Classifier:  
+Classifier: S
+Classifier: y
+Classifier: s
+Classifier: t
+Classifier: e
+Classifier: m
+Classifier:  
+Classifier: :
+Classifier: :
+Classifier:  
+Classifier: M
+Classifier: a
+Classifier: c
+Classifier: O
+Classifier: S
+Classifier: 
+

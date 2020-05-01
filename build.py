@@ -3,7 +3,7 @@
 
 '''
 
-A package for encrypting files with a password.
+Builds the source distribution.
 
 Software:      Pydlock
 Author:        Erick Edward Shepherd
@@ -15,7 +15,7 @@ Last modified: 2020-04-30
 
 Description:
     
-    Installs Pydlock and its dependencies.
+    Builds the source distribution.
 
 
 Copyright:
@@ -53,8 +53,11 @@ License:
 
 '''
 
-# Third party imports.
-import setuptools
+# Standard library imports.
+import os
+import pathlib
+import shutil
+import subprocess
 
 # Local application imports.
 import pydlock
@@ -64,49 +67,51 @@ __author__  = pydlock.__author__
 __version__ = pydlock.__version__
 
 # Constant definitions.
-DESCRIPTION = __doc__.strip().split("\n")[0]
-
-with open("README.rst", "r") as file:
-    
-    LONG_DESCRIPTION = file.read()
-
-CLASSIFIERS = """
-Development Status :: 5 - Production/Stable
-Natural Language :: English
-Programming Language :: Python :: 3
-License :: OSI Approved :: MIT License
-Operating System :: Microsoft :: Windows
-Operating System :: POSIX
-Operating System :: Unix
-Operating System :: MacOS
-"""
-
-SETUP_KWARGS = dict(
-    name             = "pydlock",
-    version          = __version__,
-    description      = DESCRIPTION,
-    long_description = LONG_DESCRIPTION,
-    classifiers      = CLASSIFIERS,
-    author           = __author__,
-    author_email     = "Contact@ErickShepherd.com",
-    maintainer       = __author__,
-    maintainer_email = "Contact@ErickShepherd.com",
-    license          = "MIT",
-    packages         = setuptools.find_packages(),
-    url              = "https://www.github.com/ErickShepherd/pydlock",
-    download_url     = "https://pypi.org/project/pydlock/",
-    project_urls     = {
-        "Bug Tracker" :
-            "https://github.com/ErickShepherd/pydlock/issues",
-        
-        "Source Code" :
-            "https://github.com/ErickShepherd/pydlock",
-        
-        "Documentation" :
-            "https://github.com/ErickShepherd/pydlock/blob/master/README.rst"
-    }
-)
+PACKAGE_NAME      = "pydlock"
+PACKAGE_PATH      = os.path.abspath(pathlib.Path(__file__).parent)
+BUILD_DIRECTORIES = ["build", "dist", PACKAGE_NAME + ".egg-info"]
 
 if __name__ == "__main__":
-
-    setuptools.setup(**SETUP_KWARGS)
+    
+    print("-" * 79, end = "\n\n")
+    print("Beginning to build the source distribution...")
+    print("\n" + "-" * 79, end = "\n\n")
+    
+    os.chdir(PACKAGE_PATH)
+    
+    print("Cleaning up old source distributions...", end = "\n\n")
+    
+    for directory in BUILD_DIRECTORIES:
+        
+        path = os.path.join(PACKAGE_PATH, directory)
+        
+        if os.path.exists(path):
+            
+            print(f"\tDeleting directory and contents: {path}")
+            
+            shutil.rmtree(path)
+    
+    print("\n" + "-" * 79, end = "\n\n")
+    print("Generating source distribution...", end = "\n\n")
+    subprocess.run("python setup.py sdist bdist_wheel")
+    
+    print("\n" + "-" * 79, end = "\n\n")
+    print("Checking source distribution...", end = "\n\n")
+    subprocess.run("python -m twine check dist/*")
+    
+    print("\n" + "-" * 79, end = "\n\n")
+    prompt = input("Upload to Test PyPI? [y/n]: ")
+    
+    if prompt.lower() in ["y", "yes", "1", "true"]:
+        
+        print("")
+        subprocess.run(("python -m twine upload --repository-url "
+                        "https://test.pypi.org/legacy/ dist/*"))
+    
+    print("\n" + "-" * 79, end = "\n\n")
+    prompt = input("Upload to PyPI? [y/n]: ")
+    
+    if prompt.lower() in ["y", "yes", "1", "true"]:
+        
+        print("")
+        subprocess.run("python -m twine upload dist/*")

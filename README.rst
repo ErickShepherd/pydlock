@@ -16,7 +16,7 @@ Installation
 ============
 
 **pydlock** is available on the Python Package Index (PyPI) at
-<https://pypi.org/project/pydlock/>. To install **pydlock**, simply use the
+https://pypi.org/project/pydlock. To install **pydlock**, simply use the
 Python :code:`pip` installer:
 
 .. code-block:: console
@@ -30,6 +30,8 @@ Usage
 
 From the command line
 ---------------------
+
+To access the :code:`help` method of the script:
 
 .. code-block:: console
 
@@ -46,6 +48,10 @@ From the command line
         --arguments ARGUMENTS
         --encoding ENCODING
 
+To encrypt a file:
+
+.. code-block:: console
+
     user@computer:~$ cat secret.txt
     Shh! It's a secret!
 
@@ -54,7 +60,13 @@ From the command line
     Re-enter password:
 
     user@computer:~$ cat secret.txt
-    gAAAAABeqx971nHtXHi4dJYw8A_m_1mRYT8V2Sy4XPLqdg0t4mp9ooN-aTU1fuPQwEpwnuFiAfbJ6oPaN9IB1gzFT5-Tb4gFXQMw5uQUXDYV2Pvso6E5lXQ=user@computer:~$ python -m pydlock unlock secret.txt
+    gAAAAABeqx971nHtXHi4dJYw8A_m_1mRYT8V2Sy4XPLqdg0t4mp9ooN-aTU1fuPQwEpwnuFiAfbJ6oPaN9IB1gzFT5-Tb4gFXQMw5uQUXDYV2Pvso6E5lXQ=
+
+To decrypt a file:
+
+.. code-block:: console
+    
+    user@computer:~$ python -m pydlock unlock secret.txt
     Enter password:
 
     user@computer:~$ cat secret.txt
@@ -68,7 +80,7 @@ In other Python modules
    
     import pydlock
 
-    filename = "example.txt"
+    filename = "secret.txt"
 
     with open(filename, "w+") as file:
 
@@ -85,21 +97,31 @@ Copyright
 ---------
 
 Pydlock - A Python file encryption tool.
-
-Copyright (C) 2020 of Erick Edward Shepherd, all rights reserved.
+    
+Copyright (c) 2020 of Erick Edward Shepherd, all rights reserved.
 
 
 License
 -------
     
-Pydlock is free software: you can redistribute it and/or modify it under the
-terms of the GNU Affero General Public License as published by the Free
-Software Foundation, either version 3 of the License, or (at your option) any
-later version.
+MIT License
 
-Pydlock is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE. See the GNU Affero General Public License for more details.
+Copyright (c) 2020 Erick Edward Shepherd
 
-You should have received a copy of the GNU Affero General Public License along
-with Pydlock. If not, see <https://www.gnu.org/licenses/>.
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

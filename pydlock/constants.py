@@ -10,7 +10,7 @@ Author:        Erick Edward Shepherd
 E-mail:        Contact@ErickShepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 Date created:  2020-04-30
-Last modified: 2020-04-30
+Last modified: 2020-04-31
 
 
 Description:
@@ -59,7 +59,7 @@ VERSION = {
     "major"       : 1,  # For milestones relative to past major versions.
     "minor"       : 2,  # For new features or functionalities.
     "maintenance" : 0,  # For bug fixes.
-    "build"       : 13  # For all changes, including those to documentation.
+    "build"       : 14  # For all changes, including those to documentation.
 }
 
 DEFAULT_ENCODING = "utf-8"

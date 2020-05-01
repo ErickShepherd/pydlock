@@ -10,7 +10,7 @@ Author:        Erick Edward Shepherd
 E-mail:        Contact@ErickShepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 Date created:  2020-04-30
-Last modified: 2020-04-30
+Last modified: 2020-04-31
 
 
 Description:
@@ -70,32 +70,42 @@ with open("README.rst", "r") as file:
     
     LONG_DESCRIPTION = file.read()
 
-CLASSIFIERS = """
-Development Status :: 5 - Production/Stable
-Natural Language :: English
-Programming Language :: Python :: 3
-License :: OSI Approved :: MIT License
-Operating System :: Microsoft :: Windows
-Operating System :: POSIX
-Operating System :: Unix
-Operating System :: MacOS
-"""
+CLASSIFIERS = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Topic :: Security",
+    "Environment :: Console",
+    "Development Status :: 5 - Production/Stable",
+    "Natural Language :: English",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS"
+]
+
+PLATFORMS = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 
 SETUP_KWARGS = dict(
-    name             = "pydlock",
-    version          = __version__,
-    description      = DESCRIPTION,
-    long_description = LONG_DESCRIPTION,
-    classifiers      = CLASSIFIERS,
-    author           = __author__,
-    author_email     = "Contact@ErickShepherd.com",
-    maintainer       = __author__,
-    maintainer_email = "Contact@ErickShepherd.com",
-    license          = "MIT",
-    packages         = setuptools.find_packages(),
-    url              = "https://www.github.com/ErickShepherd/pydlock",
-    download_url     = "https://pypi.org/project/pydlock/",
-    project_urls     = {
+    name                 = "pydlock",
+    version              = __version__,
+    description          = DESCRIPTION,
+    long_description     = LONG_DESCRIPTION,
+    classifiers          = CLASSIFIERS,
+    author               = __author__,
+    author_email         = "Contact@ErickShepherd.com",
+    maintainer           = __author__,
+    maintainer_email     = "Contact@ErickShepherd.com",
+    license              = "MIT",
+    platforms            = PLATFORMS,
+    python_requires      = ">=3.7",
+    packages             = setuptools.find_packages(),
+    url                  = "https://www.github.com/ErickShepherd/pydlock",
+    download_url         = "https://pypi.org/project/pydlock/",
+    project_urls         = {
         "Bug Tracker" :
             "https://github.com/ErickShepherd/pydlock/issues",
         

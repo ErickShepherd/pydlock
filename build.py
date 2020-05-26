@@ -57,8 +57,13 @@ License:
 # Standard library imports.
 import os
 import pathlib
+import platform
 import shutil
 import subprocess
+
+# Third party imports.
+import pexpect
+import wexpect
 
 # Local application imports.
 import pydlock
@@ -71,6 +76,47 @@ __version__ = pydlock.__version__
 PACKAGE_NAME      = "pydlock"
 PACKAGE_PATH      = os.path.abspath(pathlib.Path(__file__).parent)
 BUILD_DIRECTORIES = ["build", "dist", PACKAGE_NAME + ".egg-info"]
+
+
+# TODO: Single-source version from JSON.
+# INCREMENT BUILD IN HERE.
+
+'''
+
+>>> import json
+>>> x = VERSION = {
+...     "major"       : 1,  # For milestones relative to past major versions.
+...     "minor"       : 2,  # For new features or functionalities.
+...     "maintenance" : 0,  # For bug fixes.
+...     "build"       : 15  # For all changes, including those to documentation.
+... }
+>>> x
+{'major': 1, 'minor': 2, 'maintenance': 0, 'build': 15}
+>>> with open("version.json", "w+") as file:
+...     json.dump(x, file)
+...
+>>> with open("version.json", "r") as file:
+...     version = json.read(file)
+...
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+AttributeError: module 'json' has no attribute 'read'
+>>> with open("version.json", "r") as file:
+...     version = json.load(file)
+...
+>>> version
+{'major': 1, 'minor': 2, 'maintenance': 0, 'build': 15}
+
+'''
+
+def github():
+    
+    pass
+
+
+def pypi():
+    
+    pass
 
 
 def clean_package() -> None:

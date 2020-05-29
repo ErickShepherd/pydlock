@@ -52,7 +52,7 @@ Copyright:
 
 License:
     
-    This file is part of Pydlock (the "Software").
+    This file is part of "Pydlock" (the "Software").
     
     MIT License
 
@@ -101,7 +101,6 @@ from argparse import ArgumentParser
 
 # Local application imports.
 import pydlock
-# Local application imports.
 from pydlock.constants import DEFAULT_ENCODING
 
 # Dunder definitions.

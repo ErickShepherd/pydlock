@@ -45,7 +45,7 @@ Copyright:
 
 License:
     
-    This file is part of Pydlock (the "Software").
+    This file is part of "Pydlock" (the "Software").
     
     MIT License
 
@@ -104,7 +104,6 @@ from pydlock import constants
 from pydlock.constants import DEFAULT_ENCODING
 
 # Dunder definitions.
-#  - Versioning system: major.minor[.maintenance[.build]]
 __author__  = constants.__author__
 __version__ = constants.__version__
 

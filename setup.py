@@ -28,7 +28,7 @@ Copyright:
 
 License:
     
-    This file is part of Pydlock (the "Software").
+    This file is part of "Pydlock" (the "Software").
     
     MIT License
 
@@ -59,12 +59,15 @@ import setuptools
 
 # Local application imports.
 import pydlock
+from pydlock import constants
 
-# Module dunder definitions.
+# Dunder definitions.
 __author__  = pydlock.__author__
 __version__ = pydlock.__version__
 
 # Constant definitions.
+GITHUB_URL  = "https://github.com/ErickShepherd/pydlock"
+PYPI_URL    = "https://pypi.org/project/pydlock"
 DESCRIPTION = __doc__.strip().split("\n")[0]
 
 with open("README.rst", "r") as file:
@@ -91,7 +94,7 @@ CLASSIFIERS = [
 PLATFORMS = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"]
 
 SETUP_KWARGS = dict(
-    name                 = "pydlock",
+    name                 = constants.PACKAGE_NAME,
     version              = __version__,
     description          = DESCRIPTION,
     long_description     = LONG_DESCRIPTION,
@@ -104,17 +107,18 @@ SETUP_KWARGS = dict(
     platforms            = PLATFORMS,
     python_requires      = ">=3.7",
     packages             = setuptools.find_packages(),
-    url                  = "https://www.github.com/ErickShepherd/pydlock",
-    download_url         = "https://pypi.org/project/pydlock/",
+    include_package_data = True,
+    url                  = GITHUB_URL,
+    download_url         = PYPI_URL,
     project_urls         = {
         "Bug Tracker" :
-            "https://github.com/ErickShepherd/pydlock/issues",
+            GITHUB_URL + "/issues",
         
         "Source Code" :
-            "https://github.com/ErickShepherd/pydlock",
+            GITHUB_URL,
         
         "Documentation" :
-            "https://github.com/ErickShepherd/pydlock/blob/master/README.rst"
+            GITHUB_URL + "/blob/master/README.rst"
     }
 )
 

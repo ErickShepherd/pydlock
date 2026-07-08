@@ -11,6 +11,8 @@ requires-python = ">=3.10"
 authors = [
     { name = "Erick Shepherd", email = "Contact@ErickShepherd.com" },
 ]
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["encryption", "decryption", "cryptography", "file", "password", "Fernet"]
 dependencies = [
     # The core v1 bug: no declared runtime dependency, so `pip install pydlock`

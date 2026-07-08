@@ -12,7 +12,7 @@ E-mail:        Contact@ErickShepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 PyPI:          https://pypi.org/project/pydlock/
 Date created:  2020-04-12
-Last modified: 2020-04-30
+Last modified: 2026-07-08
 
 
 Description:

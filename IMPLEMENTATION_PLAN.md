@@ -96,7 +96,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase D — CI
 
-- [ ] 8. GitHub Actions `.github/workflows/ci.yml`: **ruff** + **pytest matrix (3.10–3.13)** +
+- [x] 8. GitHub Actions `.github/workflows/ci.yml`: **ruff** + **pytest matrix (3.10–3.13)** +
   `python -m build` + `twine check dist/*` (proves publish-readiness). Add a permissive ruff
   config; run `ruff check .` and fix findings. Dormant until pushed (local-only rule).
   `verify: ruff check .`

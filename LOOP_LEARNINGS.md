@@ -107,3 +107,24 @@ progress signal) and **never** a done-signal.
   standard robust implementation, not a choice worth a DECIDE item.
 - Item 3's throwaway checks still pass (round-trip, salt uniqueness, wrong-pw/tamper clean-fail).
   Committed pytest suite covering binary round-trip + interrupted-write is still **item 7**.
+
+## 2026-07-08 — item 5 (in-tool v1 legacy-decrypt)
+
+- **Replaced item 3's non-magic `ValueError` branch** with a transparent v1 read; re-added the
+  `sha256` import item 3 had removed as unused.
+- **Legacy key derivation byte-for-byte** (`_derive_legacy_key`):
+  `urlsafe_b64encode(sha256(password).hexdigest()[:32].encode())`. Since `password` is already
+  bytes (encoded in `password_prompt`), `sha256(password)` matches the original v1
+  `sha256(pw_str.encode(encoding))`; the hex digest is ASCII so `[:32].encode()` (design form)
+  equals v1's `.encode(encoding)[:32]` (encode-then-truncate) exactly. Confirmed by generating a
+  v1 fixture with an *independent* reimplementation of the old scheme and decrypting it.
+- **Detection is unambiguous:** v1 tokens are Fernet base64 starting `gAAAAA…`, never
+  `PYDLOCK\x02`. Non-magic file → whole file is the raw token, key from `_derive_legacy_key`;
+  same try/except so a wrong password / garbage file fails cleanly (`None`), never silent wrong
+  plaintext.
+- **No special "upgrade" code needed:** `lock` always writes v2, so the documented "re-lock
+  upgrades a v1 file" is just unlock(v1)→plaintext then lock→v2. Verified end-to-end.
+- **For item 7:** the committed v1 fixture (file + known password + provenance note) must be
+  produced with this exact old scheme — the independent generator in scratchpad `t5.py`
+  (`v1_key`) is the reference. `_derive_legacy_key` is the in-tool counterpart.
+- No fork — derivation + detection are spec-pinned verbatim.

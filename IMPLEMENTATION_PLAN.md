@@ -68,7 +68,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   the corruption the README documents as "unfixable" — it *is* fixable); drop the file-content
   `encoding` coupling (password encoding stays). Make `lock`/`unlock` writes atomic: write to a
   temp file then `os.replace` (no more `"w+"` truncate-in-place → crash-safe).
-- [ ] 5. **In-tool v1 legacy-decrypt** (design D4). `unlock`/`decrypt` auto-detect a
+- [x] 5. **In-tool v1 legacy-decrypt** (design D4). `unlock`/`decrypt` auto-detect a
   **non-magic** (v1) file — a raw Fernet token, no `b"PYDLOCK\x02"` prefix — and decrypt it with
   the old scheme byte-for-byte:
   `key = urlsafe_b64encode(sha256(password).hexdigest()[:32].encode())`. `lock` **always writes

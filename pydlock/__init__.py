@@ -66,6 +66,7 @@ from base64 import b64decode
 from base64 import b64encode
 from base64 import urlsafe_b64encode
 from getpass import getpass
+from hashlib import sha256
 
 # Third party imports.
 from cryptography.exceptions import InvalidSignature
@@ -170,6 +171,21 @@ def _derive_key(header : dict, password : bytes) -> bytes:
     )
 
 
+def _derive_legacy_key(password : bytes) -> bytes:
+
+    '''
+
+    Re-derives the v1 (pre-2.0) Fernet key from a password, byte-for-byte with
+    the old scheme: an unsalted SHA-256 hex digest truncated to 32 characters.
+    Used only to transparently read legacy files; ``lock`` never writes it.
+
+    '''
+
+    digest = sha256(password).hexdigest()
+
+    return urlsafe_b64encode(digest[:32].encode())
+
+
 def _atomic_write(path : str, data : bytes) -> None:
 
     '''
@@ -256,10 +272,13 @@ def decrypt(path     : str,
 
     '''
 
-    Decrypts a v2 pydlock file and returns its plaintext. Parses the envelope
-    header, re-derives the key from the stored salt and parameters, and lets
-    Fernet verify the token (a tampered header/token fails the HMAC cleanly
-    rather than yielding wrong plaintext).
+    Decrypts a pydlock file and returns its plaintext bytes. A v2 file (magic
+    prefix) is read via the envelope header (key re-derived from the stored
+    salt and parameters); a non-magic file is treated as a legacy v1 raw Fernet
+    token and read with the old scheme, so no existing file is stranded
+    (re-locking rewrites it as v2). Fernet verifies the token, so a wrong
+    password or a tampered header/token fails cleanly rather than yielding
+    wrong plaintext.
 
     '''
 
@@ -271,18 +290,22 @@ def decrypt(path     : str,
 
         data = file.read()
 
-    if not data.startswith(MAGIC_PREFIX):
+    if data.startswith(MAGIC_PREFIX):
 
-        # v1 legacy files (no magic) are handled in a later change; for now a
-        # non-v2 file is an explicit error, never a silent mis-decrypt.
-        raise ValueError("Not a pydlock v2 file (missing envelope magic).")
+        # v2: split off the magic line, then the JSON header line, leaving the
+        # token, and re-derive the key from the header's salt and parameters.
+        _, _, remainder        = data.partition(b"\n")
+        header_bytes, _, token = remainder.partition(b"\n")
+        header = json.loads(header_bytes.decode("utf-8"))
 
-    # Splits off the magic line, then the JSON header line, leaving the token.
-    _, _, remainder        = data.partition(b"\n")
-    header_bytes, _, token = remainder.partition(b"\n")
-    header = json.loads(header_bytes.decode("utf-8"))
+        key = _derive_key(header, password)
 
-    key = _derive_key(header, password)
+    else:
+
+        # v1 legacy: the whole file is a raw Fernet token whose key came from
+        # the old unsalted SHA-256-truncation scheme. Read it transparently.
+        key   = _derive_legacy_key(password)
+        token = data
 
     # Attempts to decrypt the token using the derived key.
     try:

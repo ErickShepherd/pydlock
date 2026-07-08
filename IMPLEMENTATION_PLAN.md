@@ -115,7 +115,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   `testpypi` GitHub Environments, triggered on `release: [released]` + `workflow_dispatch`.
   **Copy the pattern from `../cosmic_crunch/.github/workflows/publish.yml`** (adapt the project
   name to `pydlock`). No stored token — never commit any secret.
-- [ ] 11. Write `docs/release-checklist.md` for the **owner-gated tail** (plan §5, design
+- [x] 11. Write `docs/release-checklist.md` for the **owner-gated tail** (plan §5, design
   §Rollout): the git-history author/committer email rewrite
   (`erickeshepherd@gmail.com` → `24425940+ErickShepherd@users.noreply.github.com`, display name
   kept; `git filter-repo --mailmap` or `filter-branch --env-filter` over all history; set

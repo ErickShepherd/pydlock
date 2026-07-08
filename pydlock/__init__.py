@@ -90,6 +90,18 @@ SCRYPT_N     = 2 ** 15                 # scrypt cost parameter (32768); interact
 SCRYPT_R     = 8                       # scrypt block size
 SCRYPT_P     = 1                       # scrypt parallelisation
 
+# Hard ceilings on the attacker-controlled scrypt parameters read from an
+# UNTRUSTED file header. scrypt memory is ~= 128 * n * r bytes, so an
+# unbounded n (or r) in a crafted envelope would force the victim's decrypt to
+# allocate arbitrary memory (OOM/hang). These bounds sit comfortably above the
+# encrypt-time defaults above yet cap the worst case: at the ceilings scrypt
+# needs ~= 128 * 2**20 * 32 = 4 GiB, so a header outside them is treated as a
+# corrupt/incompatible file, never as a valid instruction to allocate.
+SCRYPT_MAX_N   = 2 ** 20               # ceiling on n (must also be a power of two)
+SCRYPT_MAX_R   = 32                    # ceiling on the block size r
+SCRYPT_MAX_P   = 16                    # ceiling on the parallelisation p
+MAX_SALT_BYTES = 1024                  # ceiling on the decoded per-file salt length
+
 
 def password_prompt(encoding : str = DEFAULT_ENCODING,
                     prompt   : str = "Enter password: ") -> bytes:
@@ -145,6 +157,55 @@ def _derive_scrypt_key(password : bytes,
     return urlsafe_b64encode(kdf.derive(password))
 
 
+def _validate_scrypt_params(n : object, r : object, p : object,
+                            salt : bytes) -> None:
+
+    '''
+
+    Validates and hard-bounds the scrypt parameters read from an UNTRUSTED file
+    header BEFORE any key derivation. The parameters must be integers within
+    fixed ceilings (``n`` a power of two and ``<= SCRYPT_MAX_N``, ``r <=
+    SCRYPT_MAX_R``, ``p <= SCRYPT_MAX_P``) and the decoded salt no longer than
+    ``MAX_SALT_BYTES``. Anything outside these bounds raises ``ValueError`` and
+    is treated by ``decrypt`` as a corrupt/incompatible file, never as a valid
+    instruction to allocate arbitrary memory (~= 128 * n * r bytes).
+
+    '''
+
+    # bool is a subclass of int; reject it so ``true``/``false`` in a crafted
+    # header cannot slip through as 1/0.
+    for name, value in (("n", n), ("r", r), ("p", p)):
+
+        if not isinstance(value, int) or isinstance(value, bool):
+
+            raise ValueError(f"scrypt parameter {name!r} must be an integer.")
+
+    if n < 2 or n > SCRYPT_MAX_N or (n & (n - 1)) != 0:
+
+        raise ValueError(
+            f"scrypt parameter 'n' out of bounds: must be a power of two in "
+            f"[2, {SCRYPT_MAX_N}]."
+        )
+
+    if r < 1 or r > SCRYPT_MAX_R:
+
+        raise ValueError(
+            f"scrypt parameter 'r' out of bounds: must be in [1, {SCRYPT_MAX_R}]."
+        )
+
+    if p < 1 or p > SCRYPT_MAX_P:
+
+        raise ValueError(
+            f"scrypt parameter 'p' out of bounds: must be in [1, {SCRYPT_MAX_P}]."
+        )
+
+    if len(salt) > MAX_SALT_BYTES:
+
+        raise ValueError(
+            f"scrypt salt too long: {len(salt)} bytes exceeds {MAX_SALT_BYTES}."
+        )
+
+
 def _derive_key(header : dict, password : bytes) -> bytes:
 
     '''
@@ -152,7 +213,8 @@ def _derive_key(header : dict, password : bytes) -> bytes:
     Re-derives the Fernet key for a parsed v2 envelope header, dispatching on
     the ``kdf`` identifier. An unknown identifier raises ``ValueError`` rather
     than risking a silent mis-decryption. The dispatch is intentionally left
-    open for a documented ``"pbkdf2"`` fallback id.
+    open for a documented ``"pbkdf2"`` fallback id. The attacker-controlled
+    scrypt parameters are validated and hard-bounded before any key derivation.
 
     '''
 
@@ -160,10 +222,12 @@ def _derive_key(header : dict, password : bytes) -> bytes:
 
     if kdf_id == "scrypt":
 
-        salt = b64decode(header["salt"])
+        n, r, p = header["n"], header["r"], header["p"]
+        salt    = b64decode(header["salt"])
 
-        return _derive_scrypt_key(password, salt,
-                                  header["n"], header["r"], header["p"])
+        _validate_scrypt_params(n, r, p, salt)
+
+        return _derive_scrypt_key(password, salt, n, r, p)
 
     raise ValueError(
         f"Unsupported KDF identifier {kdf_id!r} in pydlock envelope header."
@@ -289,31 +353,48 @@ def decrypt(path     : str,
 
         data = file.read()
 
-    if data.startswith(MAGIC_PREFIX):
-
-        # v2: split off the magic line, then the JSON header line, leaving the
-        # token, and re-derive the key from the header's salt and parameters.
-        _, _, remainder        = data.partition(b"\n")
-        header_bytes, _, token = remainder.partition(b"\n")
-        header = json.loads(header_bytes.decode("utf-8"))
-
-        key = _derive_key(header, password)
-
-    else:
-
-        # v1 legacy: the whole file is a raw Fernet token whose key came from
-        # the old unsalted SHA-256-truncation scheme. Read it transparently.
-        key   = _derive_legacy_key(password)
-        token = data
-
-    # Attempts to decrypt the token using the derived key.
+    # The v2 header decode, parameter validation, key derivation, and Fernet
+    # decrypt all share one failure path: a wrong password, a tampered token,
+    # OR a malformed/oversized header (bad JSON, missing/mistyped/out-of-bounds
+    # scrypt params, non-base64 salt, unknown kdf) returns None cleanly instead
+    # of leaking a raw traceback or attempting an attacker-sized allocation.
     try:
+
+        if data.startswith(MAGIC_PREFIX):
+
+            # v2: split off the magic line, then the JSON header line, leaving
+            # the token, and re-derive the key from the header's salt and
+            # (validated) parameters.
+            _, _, remainder        = data.partition(b"\n")
+            header_bytes, _, token = remainder.partition(b"\n")
+            header = json.loads(header_bytes.decode("utf-8"))
+
+            key = _derive_key(header, password)
+
+        else:
+
+            # v1 legacy: the whole file is a raw Fernet token whose key came
+            # from the old unsalted SHA-256-truncation scheme. Read it
+            # transparently.
+            key   = _derive_legacy_key(password)
+            token = data
 
         return Fernet(key).decrypt(token)
 
     except (InvalidToken, InvalidSignature):
 
         print("Incorrect password.")
+
+        return None
+
+    # A malformed or incompatible envelope: json.JSONDecodeError and
+    # binascii.Error are both ValueError subclasses; KeyError covers a missing
+    # header field; TypeError covers a value of the wrong shape. The scrypt
+    # bounds are enforced (ValueError) BEFORE Scrypt is ever constructed, so a
+    # huge n never triggers an allocation.
+    except (ValueError, KeyError, TypeError):
+
+        print("File is corrupted or incompatible.")
 
         return None
 

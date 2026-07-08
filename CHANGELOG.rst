@@ -43,3 +43,47 @@ Changelog
 
 * Changed the package versioning system to include a build number for PyPI
   package management.
+
+
+==========================
+2026-07-08 - Version 2.0.0
+==========================
+
+Major release with a **breaking change to the on-disk file format**. Files
+locked by pydlock 1.x still decrypt transparently (see "Migrating from v1" in
+the README); re-locking upgrades a file to the new format. The final 1.x
+release remains installable as :code:`pip install 'pydlock<2'`.
+
+* **Security: salted, memory-hard scrypt key derivation.** The encryption key
+  is now derived from the password with scrypt (:code:`n=32768, r=8, p=1`) and
+  a fresh per-file random salt, replacing the unsalted single-pass SHA-256
+  derivation. The file cipher remains Fernet (AES-128-CBC + HMAC-SHA256); no
+  custom cryptography is introduced.
+
+* **New self-identifying on-disk envelope.** Encrypted files begin with a
+  :code:`PYDLOCK` magic marker and a JSON header carrying the KDF parameters
+  and salt, followed by the Fernet token. The format is versioned and leaves
+  room for a documented :code:`pbkdf2` fallback identifier.
+
+* **Transparent v1 legacy decryption.** Non-magic (v1) files are detected and
+  decrypted with the old scheme, so no existing files are stranded.
+
+* **Binary files are no longer corrupted.** Files are read and written as raw
+  bytes, so binary files and Windows executables round-trip losslessly — this
+  fixes the corruption previously documented as "unfixable".
+
+* **Crash-safe atomic writes.** :code:`lock`/:code:`unlock` write to a
+  temporary file and atomically replace the original.
+
+* **Removed the** :code:`python` **and** :code:`run` **subcommands.**
+  Decrypt-and-execute (:code:`exec` / :code:`subprocess` with
+  :code:`shell=True`) was a security footgun and has been removed.
+
+* **Added** :code:`encrypt` **/** :code:`decrypt` **CLI aliases** for
+  :code:`lock`/:code:`unlock`, plus a :code:`pydlock` console entry point.
+
+* **Packaging and tooling.** Migrated to :code:`pyproject.toml` (hatchling),
+  declared the previously-missing :code:`cryptography` runtime dependency,
+  single-sourced the version as :code:`2.0.0`, and added an offline pytest
+  suite, ruff linting, a CI matrix (Python 3.10-3.13), and OIDC Trusted
+  Publishing.

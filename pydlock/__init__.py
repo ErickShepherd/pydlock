@@ -113,6 +113,14 @@ MAX_SALT_BYTES = 1024                  # ceiling on the decoded per-file salt le
 # treated as corrupt/incompatible, never as a valid instruction to allocate/burn.
 MAX_SCRYPT_MEM_BYTES = 256 * 1024 * 1024   # cost budget on 128 * n * r * p
 
+# Ceiling on the raw JSON header bytes read from an UNTRUSTED envelope, enforced
+# BEFORE json.loads. A well-formed header is ~100 bytes; this generous bound
+# rejects a pathologically large header (memory) as a corrupt/incompatible file
+# rather than feeding it to the parser. Note this alone does NOT stop a deeply
+# NESTED-but-small header (a few KiB of nested brackets already exceeds the
+# interpreter's recursion limit), so decrypt additionally catches RecursionError.
+MAX_HEADER_BYTES = 64 * 1024               # ceiling on the raw JSON header length
+
 
 def password_prompt(encoding : str = DEFAULT_ENCODING,
                     prompt   : str = "Enter password: ") -> bytes:
@@ -418,6 +426,16 @@ def decrypt(path     : str,
             # (validated) parameters.
             _, _, remainder        = data.partition(b"\n")
             header_bytes, _, token = remainder.partition(b"\n")
+
+            # Bound the raw header BEFORE parsing so a pathologically large
+            # header is rejected as corrupt rather than fed to json.loads.
+            if len(header_bytes) > MAX_HEADER_BYTES:
+
+                raise ValueError(
+                    f"pydlock header too long: {len(header_bytes)} bytes "
+                    f"exceeds {MAX_HEADER_BYTES}."
+                )
+
             header = json.loads(header_bytes.decode("utf-8"))
 
             key = _derive_key(header, password)
@@ -446,7 +464,11 @@ def decrypt(path     : str,
     # MemoryError and InternalError are caught as defence in depth: even if some
     # param slipped through, a memory failure (or OpenSSL's own N < 2**(16*r)
     # check surfacing) yields the clean sentinel, never a raw traceback.
-    except (ValueError, KeyError, TypeError, MemoryError, InternalError):
+    # RecursionError (a RuntimeError subclass, so NOT covered by the classes
+    # above) is caught too: a deeply-nested-but-small crafted JSON header makes
+    # json.loads recurse past the interpreter limit, and must fail cleanly.
+    except (ValueError, KeyError, TypeError, MemoryError, InternalError,
+            RecursionError):
 
         print("File is corrupted or incompatible.")
 

@@ -348,6 +348,25 @@ def test_oversized_salt_rejected(tmp_path):
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
 
 
+def test_deeply_nested_header_rejected_without_recursionerror(tmp_path):
+
+    # A crafted header whose JSON nests far deeper than the interpreter's
+    # recursion limit makes json.loads raise RecursionError (a RuntimeError
+    # subclass) — NOT in decrypt's caught tuple, so unpatched it escapes as a
+    # raw traceback on hostile input, violating the "fails cleanly" guarantee.
+    # It must instead return the clean sentinel (None), fast, no traceback.
+    path   = tmp_path / "nested.locked"
+    nested = ("[" * 30000) + ("]" * 30000)
+    header = ('{"kdf":' + nested + "}").encode("utf-8")
+    path.write_bytes(MAGIC + header + b"\n" + b"token")
+
+    import time
+    start = time.monotonic()
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
+    assert time.monotonic() - start < 1.0, "must reject fast, no deep recursion"
+
+
 def test_validation_accepts_memory_product_ceiling():
 
     # A genuinely-derivable set that lands exactly ON the memory-product cap

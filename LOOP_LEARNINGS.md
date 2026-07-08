@@ -170,3 +170,21 @@ progress signal) and **never** a done-signal.
   `_atomic_write` calls), and asserts a `RuntimeError` propagates — confirms the helper doesn't
   swallow write failures and cleans up its temp file.
 - `python -m pytest -q` (the item's verify oracle) → **9 passed**. No fork.
+
+## 2026-07-08 — item 8 (CI workflow + ruff config)
+
+- **`.github/workflows/ci.yml`** adapted from `../cosmic_crunch` (three jobs): `lint` (ruff on
+  3.12), `test` (pytest matrix 3.10-3.13, installs `.[test]`, offline), `build` (`python -m
+  build` + `twine check dist/*` to prove publish-readiness). Triggers on push to main/master,
+  PR, and workflow_dispatch. **Dormant until pushed** — the loop commits it but never pushes
+  (local-only rule / stop-and-surface).
+- **Permissive ruff config** copied from cosmic: `target-version = "py310"`, `line-length = 100`,
+  and ruff's *default* lint set only (pyflakes `F` + pycodestyle `E4/E7/E9`) — deliberately
+  does not enforce E1/E2 spacing or E501, so pydlock's aligned-assignment / blank-line-after-def
+  style is left alone.
+- **`ruff check .` → All checks passed** (0 findings) — the code was already clean under the
+  permissive set (no unused imports etc.). The item's verify oracle passes.
+- **Verified the build job locally too** (not just ruff): `python -m build` produced
+  `pydlock-2.0.0` sdist + wheel and `twine check` PASSED both — confirms the hatchling packaging
+  from items 1-2 is actually publish-ready. Build artifacts are gitignored (item 2).
+- No fork. Phase D done.

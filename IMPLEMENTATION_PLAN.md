@@ -103,7 +103,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase E — README + release prep
 
-- [ ] 9. Refresh `README.rst` for v2 (plan §Phase 5): keep the **dead-simple one-liner
+- [x] 9. Refresh `README.rst` for v2 (plan §Phase 5): keep the **dead-simple one-liner
   `pydlock lock file` / `pydlock unlock file` front-and-center** — the trivial UX is the selling
   point. Document the **v2.0.0 breaking change** (new on-disk envelope), the **migration** (v1
   files decrypt transparently; re-`lock` to upgrade; `pydlock<2` as the documented fallback), a

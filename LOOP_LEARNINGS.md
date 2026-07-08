@@ -188,3 +188,19 @@ progress signal) and **never** a done-signal.
   `pydlock-2.0.0` sdist + wheel and `twine check` PASSED both — confirms the hatchling packaging
   from items 1-2 is actually publish-ready. Build artifacts are gitignored (item 2).
 - No fork. Phase D done.
+
+## 2026-07-08 — item 9 (README v2 refresh)
+
+- Rewrote `README.rst` (kept RST — item 10 decides Markdown vs RST for the *changelog* only,
+  README stays .rst). Leads with the `pydlock lock file` / `pydlock unlock file` one-liner
+  (the console entry point from item 1) as the selling point. Covers all required v2 topics:
+  breaking on-disk envelope, transparent v1 migration + `pip install 'pydlock<2'` fallback,
+  "how your password is protected" (salted scrypt n=32768/r=8/p=1 + Fernet unchanged),
+  binary-file fix, `python`/`run` removal (security), and `encrypt`/`decrypt` aliases.
+- **Prose item, no `verify:` oracle** → out-of-loop review discharges it. But since
+  `pyproject` sets `readme = "README.rst"`, `twine check` validates the RST renders: ran
+  `python -m build` + `twine check` → both dists PASSED, so the long-description won't break on
+  PyPI. Also grep-confirmed no stray `python -m pydlock python` / `--arguments` / old CLI refs.
+- Removed the old README's stale bits: `{lock,unlock,python,run}` help block, the
+  `python -m pydlock python` example, and the full inline MIT text (now points at the LICENSE
+  file). No fork.

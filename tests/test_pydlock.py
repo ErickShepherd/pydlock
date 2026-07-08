@@ -145,6 +145,25 @@ def test_tampered_header_fails_never_wrong_plaintext(tmp_path):
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
 
 
+def test_lock_unlock_preserves_file_mode(tmp_path):
+
+    # _atomic_write writes via mkstemp (mode 0600) then os.replace, which would
+    # silently tighten a 0644 file to owner-only on every round-trip. The
+    # original file's mode must survive both lock and unlock.
+    import stat
+
+    path = tmp_path / "perms.txt"
+    path.write_bytes(b"mode must survive a round-trip\n")
+    os.chmod(path, 0o644)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644
+
+    pydlock.lock(str(path), password=PASSWORD)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644, "lock tightened the mode"
+
+    assert pydlock.unlock(str(path), password=PASSWORD) is True
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644, "unlock tightened the mode"
+
+
 def test_atomic_write_interrupt_leaves_original(tmp_path, monkeypatch):
 
     path     = tmp_path / "atomic.txt"

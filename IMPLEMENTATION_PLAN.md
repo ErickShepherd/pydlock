@@ -63,7 +63,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   `decrypt`: parse the header, re-derive the key from the stored salt/params. Leave the `kdf`
   dispatch open to a documented `"pbkdf2"` fallback id (unknown id → clear error, not a silent
   mis-decrypt). No custom crypto — Fernet is unchanged.
-- [ ] 4. **Bytes-mode I/O + atomic writes** (plan §1, design §Key decisions D6). Read/write
+- [x] 4. **Bytes-mode I/O + atomic writes** (plan §1, design §Key decisions D6). Read/write
   files as `"rb"`/`"wb"` so binary files and Windows executables round-trip losslessly (fixes
   the corruption the README documents as "unfixable" — it *is* fixable); drop the file-content
   `encoding` coupling (password encoding stays). Make `lock`/`unlock` writes atomic: write to a

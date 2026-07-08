@@ -61,6 +61,7 @@ Notes:
 import json
 import os
 import subprocess
+import tempfile
 from base64 import b64decode
 from base64 import b64encode
 from base64 import urlsafe_b64encode
@@ -169,6 +170,46 @@ def _derive_key(header : dict, password : bytes) -> bytes:
     )
 
 
+def _atomic_write(path : str, data : bytes) -> None:
+
+    '''
+
+    Writes bytes to a path atomically: the data is written to a temp file in
+    the same directory, flushed to disk, then swapped into place with
+    ``os.replace``. An interrupted write can never leave a partially written
+    or truncated file (unlike the previous in-place ``"w+"`` truncate).
+
+    '''
+
+    directory       = os.path.dirname(os.path.abspath(path))
+    file_descriptor, temporary_path = tempfile.mkstemp(dir    = directory,
+                                                       prefix = ".pydlock-",
+                                                       suffix = ".tmp")
+
+    try:
+
+        with os.fdopen(file_descriptor, "wb") as file:
+
+            file.write(data)
+            file.flush()
+            os.fsync(file.fileno())
+
+        os.replace(temporary_path, path)
+
+    except BaseException:
+
+        # Best-effort cleanup of the temp file on any failure.
+        try:
+
+            os.remove(temporary_path)
+
+        except OSError:
+
+            pass
+
+        raise
+
+
 def encrypt(path     : str,
             encoding : str   = DEFAULT_ENCODING,
             password : bytes = None) -> bytes:
@@ -185,9 +226,11 @@ def encrypt(path     : str,
 
         password = double_password_prompt(encoding)
 
-    with open(path, "r", encoding = encoding) as file:
+    # Reads the plaintext as raw bytes so binary files (and Windows
+    # executables) round-trip losslessly; only the password uses ``encoding``.
+    with open(path, "rb") as file:
 
-        contents = file.read().encode(encoding)
+        contents = file.read()
 
     # Derives a fresh key from a per-file random salt.
     salt = os.urandom(SALT_BYTES)
@@ -209,7 +252,7 @@ def encrypt(path     : str,
 
 def decrypt(path     : str,
             encoding : str   = DEFAULT_ENCODING,
-            password : bytes = None) -> str:
+            password : bytes = None) -> bytes:
 
     '''
 
@@ -244,9 +287,7 @@ def decrypt(path     : str,
     # Attempts to decrypt the token using the derived key.
     try:
 
-        contents = Fernet(key).decrypt(token)
-
-        return contents.decode(encoding)
+        return Fernet(key).decrypt(token)
 
     except (InvalidToken, InvalidSignature):
 
@@ -268,9 +309,7 @@ def lock(path      : str,
 
     envelope = encrypt(path, encoding, password)
 
-    with open(path, "wb") as file:
-
-        file.write(envelope)
+    _atomic_write(path, envelope)
 
 
 def unlock(path      : str,
@@ -289,9 +328,7 @@ def unlock(path      : str,
 
     if contents is not None:
 
-        with open(path, "w+", encoding = encoding) as file:
-
-            file.write(contents)
+        _atomic_write(path, contents)
 
         return True
 

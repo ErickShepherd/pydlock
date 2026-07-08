@@ -347,6 +347,23 @@ def _atomic_write(path : str, data : bytes) -> None:
         raise
 
 
+def _normalise_password(password : str | bytes, encoding : str) -> bytes:
+
+    '''
+
+    Normalises a password to bytes at the public API boundary. A library caller
+    may pass a ``str``, but scrypt (and the v1 legacy SHA-256 path) needs bytes;
+    a ``str`` is encoded with ``encoding``, while bytes pass through unchanged.
+
+    '''
+
+    if isinstance(password, str):
+
+        return password.encode(encoding)
+
+    return password
+
+
 def encrypt(path     : str,
             encoding : str                  = DEFAULT_ENCODING,
             password : str | bytes | None = None) -> bytes:
@@ -367,13 +384,9 @@ def encrypt(path     : str,
 
         password = double_password_prompt(encoding)
 
-    # Normalise the password to bytes at the public API boundary: a library
-    # caller may pass a str, but scrypt (and the v1 legacy SHA-256 path) needs
-    # bytes. The CLI/getpass paths already yield bytes and pass through here
-    # unchanged.
-    if isinstance(password, str):
-
-        password = password.encode(encoding)
+    # Normalise the password to bytes at the public API boundary (see
+    # _normalise_password). The CLI/getpass paths already yield bytes.
+    password = _normalise_password(password, encoding)
 
     # Reads the plaintext as raw bytes so binary files (and Windows
     # executables) round-trip losslessly; only the password uses ``encoding``.
@@ -424,11 +437,10 @@ def decrypt(path     : str,
         password = password_prompt(encoding)
 
     # Normalise the password to bytes ONCE, before the v2/v1 branch below, so
-    # both the scrypt (v2) and legacy SHA-256 (v1) key derivations receive
-    # bytes regardless of whether the caller passed a str or bytes.
-    if isinstance(password, str):
-
-        password = password.encode(encoding)
+    # both the scrypt (v2) and legacy SHA-256 (v1) key derivations receive bytes
+    # regardless of whether the caller passed a str or bytes (see
+    # _normalise_password).
+    password = _normalise_password(password, encoding)
 
     with open(path, "rb") as file:
 

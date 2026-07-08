@@ -128,3 +128,26 @@ progress signal) and **never** a done-signal.
   produced with this exact old scheme — the independent generator in scratchpad `t5.py`
   (`v1_key`) is the reference. `_derive_legacy_key` is the in-tool counterpart.
 - No fork — derivation + detection are spec-pinned verbatim.
+
+## 2026-07-08 — item 6 (remove python/run; encrypt/decrypt aliases; type hints)
+
+- **Two sub-tasks were already done in item 3's rewrite:** the `encrypt` docstring typo (it no
+  longer says "Decrypts") and the `double_password_prompt` `key1/key2` → `password1/password2`
+  naming. Verified by grep before starting; nothing to redo.
+- **Deleted `python()` (`exec`) and `run()` (`subprocess … shell=True`)** — the security
+  footguns — by truncating `__init__.py` at `def python(`. Removed the now-unused
+  `import subprocess`. The item's `verify:` oracle
+  (`grep -rn "exec(\|shell=True" pydlock/ ; test $? -eq 1`) passes (exit 1, none found).
+- **Dropped the dead `arguments` parameter** from `lock`/`unlock` (only python/run used it).
+  Signatures are now `(path, encoding, password)`; verified via `inspect.signature`.
+- **CLI reduced to `{lock, unlock, encrypt, decrypt}`** in `__main__.py`, with `encrypt`→`lock`
+  and `decrypt`→`unlock` aliases in `function_map` (the CLI verbs map to the *file-writing*
+  `lock`/`unlock`, NOT the module-level `encrypt`/`decrypt` which return bytes). Dropped the
+  now-dead `--arguments` flag; dispatch is `task(path, encoding)`. CLI round-trip verified end
+  to end (encrypt then decrypt alias recovers the plaintext).
+- **First full type-hint pass:** `password : bytes | None = None` everywhere (py>=3.10 union
+  syntax, no `typing` import); `decrypt -> bytes | None` (returns None on bad password).
+- **Also refreshed `__main__.py`'s module docstring** to match the reduced CLI and removed the
+  now-false "Windows executables corrupt / unfixable" Notes block (item 4 fixed that). This is
+  in-scope for "reduce the CLI"; user-facing README is item 9.
+- Phase B (items 3-6, the v2 behavior) is now complete. No fork.

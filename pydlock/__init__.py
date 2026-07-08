@@ -60,7 +60,6 @@ Notes:
 # Standard library imports.
 import json
 import os
-import subprocess
 import tempfile
 from base64 import b64decode
 from base64 import b64encode
@@ -227,8 +226,8 @@ def _atomic_write(path : str, data : bytes) -> None:
 
 
 def encrypt(path     : str,
-            encoding : str   = DEFAULT_ENCODING,
-            password : bytes = None) -> bytes:
+            encoding : str          = DEFAULT_ENCODING,
+            password : bytes | None = None) -> bytes:
 
     '''
 
@@ -267,8 +266,8 @@ def encrypt(path     : str,
 
 
 def decrypt(path     : str,
-            encoding : str   = DEFAULT_ENCODING,
-            password : bytes = None) -> bytes:
+            encoding : str          = DEFAULT_ENCODING,
+            password : bytes | None = None) -> bytes | None:
 
     '''
 
@@ -319,10 +318,9 @@ def decrypt(path     : str,
         return None
 
 
-def lock(path      : str,
-         arguments : str   = "",
-         encoding  : str   = DEFAULT_ENCODING,
-         password  : bytes = None) -> None:
+def lock(path     : str,
+         encoding : str          = DEFAULT_ENCODING,
+         password : bytes | None = None) -> None:
 
     '''
 
@@ -335,10 +333,9 @@ def lock(path      : str,
     _atomic_write(path, envelope)
 
 
-def unlock(path      : str,
-           arguments : str   = "",
-           encoding  : str   = DEFAULT_ENCODING,
-           password  : bytes = None) -> bool:
+def unlock(path     : str,
+           encoding : str          = DEFAULT_ENCODING,
+           password : bytes | None = None) -> bool:
 
     '''
 
@@ -358,50 +355,3 @@ def unlock(path      : str,
     else:
 
         return False
-
-
-def python(path      : str,
-           arguments : str   = "",
-           encoding  : str   = DEFAULT_ENCODING,
-           password  : bytes = None) -> None:
-
-    '''
-
-    Decrypts and executes the contents of an encrypted Python file.
-
-    '''
-
-    contents = decrypt(path, encoding, password)
-
-    if contents is not None:
-
-        exec(contents)
-
-
-def run(path      : str,
-        arguments : str   = "",
-        encoding  : str   = DEFAULT_ENCODING,
-        password  : bytes = None) -> None:
-
-    '''
-
-    Temporarily decrypts a program and executes it with the supplied arguments
-    before re-encrypting it.
-
-    '''
-
-    if password is None:
-
-        password = password_prompt()
-
-    # Temporarily decrypts the file in order to run it.
-    successful_unlock = unlock(path, arguments, encoding, password)
-
-    if successful_unlock:
-
-        # Attempts to run the file with the supplied arguments.
-        command = path + " " + arguments
-        subprocess.run(command, shell = True)
-
-        # Temporarily re-encrypts the file after the run attempt is completed.
-        lock(path, arguments, encoding, password)

@@ -185,7 +185,7 @@ rewritten history, and making the repo public all stay owner-gated, outside ever
   `version.json`, `setup.py`, and `build.py`** (the four-part/trailing-dot scheme and the
   interactive `twine` uploader all go).
 - **Declare the `cryptography` dependency** (the missing `install_requires`) with a sensible
-  floor; `requires-python = ">=3.9"`.
+  floor; `requires-python = ">=3.10"`.
 - Console entry point `pydlock` (so `pydlock lock file` works alongside `python -m pydlock`);
   keep `python -m pydlock` working via `__main__`.
 - SPDX `license = "MIT"`; keep the MIT `LICENSE`; replace the duplicated ~30-line MIT block
@@ -221,7 +221,7 @@ rewritten history, and making the repo public all stay owner-gated, outside ever
   - **KDF params honored** — params written into the envelope are read back and used; a
     tampered envelope/token fails authentication rather than silently mis-decrypting;
   - **atomic write** — an interrupted lock leaves the original intact.
-- GitHub Actions: ruff + pytest on 3.9–3.13; `python -m build` + `twine check` job proving
+- GitHub Actions: ruff + pytest on 3.10–3.13; `python -m build` + `twine check` job proving
   publish-readiness. Dormant until pushed (local-only rule).
 
 ### Phase 5 — README + release prep + publish workflow

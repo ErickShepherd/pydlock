@@ -35,7 +35,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase A — packaging + metadata (mechanical; port, no behavior change yet)
 
-- [ ] 1. Add `pyproject.toml` (hatchling; `requires-python = ">=3.9"`; **declare the missing
+- [ ] 1. Add `pyproject.toml` (hatchling; `requires-python = ">=3.10"`; **declare the missing
   `cryptography` runtime dependency** with a sensible floor — the real bug: current `setup.py`
   has no `install_requires` so `pip install pydlock` breaks on first use, plan §1). Single-source
   `__version__ = "2.0.0"` (kill the trailing-dot f-string in `pydlock/constants.py` and the
@@ -96,7 +96,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase D — CI
 
-- [ ] 8. GitHub Actions `.github/workflows/ci.yml`: **ruff** + **pytest matrix (3.9–3.13)** +
+- [ ] 8. GitHub Actions `.github/workflows/ci.yml`: **ruff** + **pytest matrix (3.10–3.13)** +
   `python -m build` + `twine check dist/*` (proves publish-readiness). Add a permissive ruff
   config; run `ruff check .` and fix findings. Dormant until pushed (local-only rule).
   `verify: ruff check .`

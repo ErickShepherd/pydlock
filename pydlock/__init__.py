@@ -318,8 +318,8 @@ def _atomic_write(path : str, data : bytes) -> None:
 
 
 def encrypt(path     : str,
-            encoding : str          = DEFAULT_ENCODING,
-            password : bytes | None = None) -> bytes:
+            encoding : str                  = DEFAULT_ENCODING,
+            password : str | bytes | None = None) -> bytes:
 
     '''
 
@@ -327,11 +327,23 @@ def encrypt(path     : str,
     magic prefix, a JSON header carrying the KDF parameters and per-file salt,
     a newline, and the Fernet token.
 
+    The ``password`` may be passed as ``str`` or ``bytes`` (or omitted, to
+    prompt): a ``str`` is encoded to bytes with ``encoding`` at this public API
+    boundary, since scrypt operates on bytes.
+
     '''
 
     if password is None:
 
         password = double_password_prompt(encoding)
+
+    # Normalise the password to bytes at the public API boundary: a library
+    # caller may pass a str, but scrypt (and the v1 legacy SHA-256 path) needs
+    # bytes. The CLI/getpass paths already yield bytes and pass through here
+    # unchanged.
+    if isinstance(password, str):
+
+        password = password.encode(encoding)
 
     # Reads the plaintext as raw bytes so binary files (and Windows
     # executables) round-trip losslessly; only the password uses ``encoding``.
@@ -358,8 +370,8 @@ def encrypt(path     : str,
 
 
 def decrypt(path     : str,
-            encoding : str          = DEFAULT_ENCODING,
-            password : bytes | None = None) -> bytes | None:
+            encoding : str                  = DEFAULT_ENCODING,
+            password : str | bytes | None = None) -> bytes | None:
 
     '''
 
@@ -371,11 +383,22 @@ def decrypt(path     : str,
     password or a tampered header/token fails cleanly rather than yielding
     wrong plaintext.
 
+    The ``password`` may be passed as ``str`` or ``bytes`` (or omitted, to
+    prompt): a ``str`` is encoded to bytes with ``encoding`` at this public API
+    boundary, covering both the v2 scrypt path and the v1 legacy path.
+
     '''
 
     if password is None:
 
         password = password_prompt(encoding)
+
+    # Normalise the password to bytes ONCE, before the v2/v1 branch below, so
+    # both the scrypt (v2) and legacy SHA-256 (v1) key derivations receive
+    # bytes regardless of whether the caller passed a str or bytes.
+    if isinstance(password, str):
+
+        password = password.encode(encoding)
 
     with open(path, "rb") as file:
 
@@ -431,8 +454,8 @@ def decrypt(path     : str,
 
 
 def lock(path     : str,
-         encoding : str          = DEFAULT_ENCODING,
-         password : bytes | None = None) -> None:
+         encoding : str                  = DEFAULT_ENCODING,
+         password : str | bytes | None = None) -> None:
 
     '''
 
@@ -446,8 +469,8 @@ def lock(path     : str,
 
 
 def unlock(path     : str,
-           encoding : str          = DEFAULT_ENCODING,
-           password : bytes | None = None) -> bool:
+           encoding : str                  = DEFAULT_ENCODING,
+           password : str | bytes | None = None) -> bool:
 
     '''
 

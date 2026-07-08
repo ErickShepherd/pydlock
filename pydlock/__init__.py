@@ -68,6 +68,7 @@ from getpass import getpass
 from hashlib import sha256
 
 # Third party imports.
+from cryptography.exceptions import InternalError
 from cryptography.exceptions import InvalidSignature
 from cryptography.fernet import Fernet
 from cryptography.fernet import InvalidToken
@@ -101,6 +102,15 @@ SCRYPT_MAX_N   = 2 ** 20               # ceiling on n (must also be a power of t
 SCRYPT_MAX_R   = 32                    # ceiling on the block size r
 SCRYPT_MAX_P   = 16                    # ceiling on the parallelisation p
 MAX_SALT_BYTES = 1024                  # ceiling on the decoded per-file salt length
+
+# Per-factor ceilings alone are NOT enough: scrypt memory is ~= 128 * n * r,
+# so n and r each at their (individually legal) ceiling still multiply out to a
+# ~4 GiB allocation (128 * 2**20 * 32). We therefore ALSO bound the memory
+# PRODUCT. The encrypt-time default (n=2**15, r=8) needs ~32 MiB, so a 256 MiB
+# cap leaves 8x headroom for a user who deliberately raises the cost factor
+# while still capping the worst-case bomb. A header exceeding this product is
+# treated as corrupt/incompatible, never as a valid instruction to allocate.
+MAX_SCRYPT_MEM_BYTES = 256 * 1024 * 1024   # 256 MiB ceiling on ~= 128 * n * r
 
 
 def password_prompt(encoding : str = DEFAULT_ENCODING,
@@ -166,9 +176,12 @@ def _validate_scrypt_params(n : object, r : object, p : object,
     header BEFORE any key derivation. The parameters must be integers within
     fixed ceilings (``n`` a power of two and ``<= SCRYPT_MAX_N``, ``r <=
     SCRYPT_MAX_R``, ``p <= SCRYPT_MAX_P``) and the decoded salt no longer than
-    ``MAX_SALT_BYTES``. Anything outside these bounds raises ``ValueError`` and
-    is treated by ``decrypt`` as a corrupt/incompatible file, never as a valid
-    instruction to allocate arbitrary memory (~= 128 * n * r bytes).
+    ``MAX_SALT_BYTES``. The per-factor ceilings are NOT sufficient on their own
+    (n and r each at their ceiling still multiply out to a ~4 GiB allocation),
+    so the scrypt memory PRODUCT (~= 128 * n * r) is additionally bounded by
+    ``MAX_SCRYPT_MEM_BYTES``. Anything outside these bounds raises ``ValueError``
+    and is treated by ``decrypt`` as a corrupt/incompatible file, never as a
+    valid instruction to allocate arbitrary memory.
 
     '''
 
@@ -197,6 +210,16 @@ def _validate_scrypt_params(n : object, r : object, p : object,
 
         raise ValueError(
             f"scrypt parameter 'p' out of bounds: must be in [1, {SCRYPT_MAX_P}]."
+        )
+
+    # Bound the memory PRODUCT, not just the individual factors: n and r each
+    # within their per-factor ceiling can still multiply to a multi-GiB scrypt
+    # allocation (~= 128 * n * r). Reject before Scrypt is ever constructed.
+    if 128 * n * r > MAX_SCRYPT_MEM_BYTES:
+
+        raise ValueError(
+            f"scrypt parameters demand too much memory: 128 * n * r = "
+            f"{128 * n * r} bytes exceeds {MAX_SCRYPT_MEM_BYTES}."
         )
 
     if len(salt) > MAX_SALT_BYTES:
@@ -390,9 +413,12 @@ def decrypt(path     : str,
     # A malformed or incompatible envelope: json.JSONDecodeError and
     # binascii.Error are both ValueError subclasses; KeyError covers a missing
     # header field; TypeError covers a value of the wrong shape. The scrypt
-    # bounds are enforced (ValueError) BEFORE Scrypt is ever constructed, so a
-    # huge n never triggers an allocation.
-    except (ValueError, KeyError, TypeError):
+    # bounds (including the 128*n*r memory product) are enforced (ValueError)
+    # BEFORE Scrypt is ever constructed, so a huge allocation never fires.
+    # MemoryError and InternalError are caught as defence in depth: even if some
+    # param slipped through, a memory failure (or OpenSSL's own N < 2**(16*r)
+    # check surfacing) yields the clean sentinel, never a raw traceback.
+    except (ValueError, KeyError, TypeError, MemoryError, InternalError):
 
         print("File is corrupted or incompatible.")
 

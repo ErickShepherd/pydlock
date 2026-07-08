@@ -16,3 +16,5 @@ htmlcov/
 # Virtual environments
 .venv/
 venv/
+docs/audits/*.run.log
+docs/audits/*.audit-state.json

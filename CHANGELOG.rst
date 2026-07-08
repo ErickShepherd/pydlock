@@ -46,8 +46,30 @@ Changelog
 
 
 ==========================
+2026-07-08 - Version 2.0.1
+==========================
+
+First published release on PyPI. Version 2.0.0 was a pre-release validated
+only on TestPyPI and was superseded by this release before publication; its
+modernization notes are retained below for the full history.
+
+* **Fixed: a** :code:`str` **password via the public** :code:`password=` **API
+  raised** :code:`TypeError`. A library caller doing
+  :code:`pydlock.lock(path, password="a string")` crashed inside scrypt
+  (:code:`Cannot convert str instance to a buffer`), because the key
+  derivation requires bytes. Passwords are now accepted as :code:`str` or
+  :code:`bytes` on :code:`lock`/:code:`unlock`/:code:`encrypt`/:code:`decrypt`;
+  a :code:`str` is encoded with the selected :code:`encoding` at the public API
+  boundary, covering both the v2 scrypt path and the v1 legacy path. The CLI
+  (which already supplies bytes via :code:`getpass`) is unaffected.
+
+
+==========================
 2026-07-08 - Version 2.0.0
 ==========================
+
+*Pre-release, TestPyPI only — never published to production PyPI; superseded by
+2.0.1.*
 
 Major release with a **breaking change to the on-disk file format**. Files
 locked by pydlock 1.x still decrypt transparently (see "Migrating from v1" in

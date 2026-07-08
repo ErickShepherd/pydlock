@@ -164,6 +164,84 @@ def test_atomic_write_interrupt_leaves_original(tmp_path, monkeypatch):
     assert list(tmp_path.glob(".pydlock-*")) == []
 
 
+# --- str password via the public API (regression: v2.0.1) --------------------
+#
+# Every test above drives the API with a *bytes* password, which is exactly how
+# the v2.0.0 str-password crash slipped through: pydlock.lock(path,
+# password="a string") reached scrypt as a str and raised
+# ``TypeError: Cannot convert str instance to a buffer``. These exercise the
+# PUBLIC API with a str and pin that str and bytes are interchangeable.
+
+STR_PASSWORD = "correct horse battery staple"   # the str form of PASSWORD
+
+
+def test_str_password_text_round_trip(tmp_path):
+
+    path     = tmp_path / "note.txt"
+    original = "hello pydlock\nsecond line\n".encode("utf-8")
+    path.write_bytes(original)
+
+    # The crashing call: a plain str password through the public API.
+    pydlock.lock(str(path), password=STR_PASSWORD)
+    assert path.read_bytes().startswith(MAGIC)
+
+    assert pydlock.unlock(str(path), password=STR_PASSWORD) is True
+    assert path.read_bytes() == original
+
+
+def test_str_password_binary_round_trip(tmp_path):
+
+    path     = tmp_path / "blob.bin"
+    original = bytes(range(256)) * 4 + b"\x00\xff\x80\x01"
+    path.write_bytes(original)
+
+    pydlock.lock(str(path), password=STR_PASSWORD)
+    assert pydlock.unlock(str(path), password=STR_PASSWORD) is True
+
+    assert path.read_bytes() == original
+
+
+def test_wrong_str_password_fails_cleanly(tmp_path):
+
+    path = tmp_path / "secret.txt"
+    path.write_bytes(b"classified\n")
+    pydlock.lock(str(path), password=STR_PASSWORD)
+    envelope = path.read_bytes()
+
+    # A wrong str password returns False (no traceback) and leaves the file as-is.
+    assert pydlock.unlock(str(path), password="wrong string") is False
+    assert path.read_bytes() == envelope
+
+
+def test_str_and_bytes_passwords_are_interchangeable(tmp_path):
+
+    # A file locked with a str password unlocks with the equivalent bytes, and
+    # vice versa: normalisation is a pure str.encode(encoding), so the two forms
+    # derive the same key. This also pins that bytes passwords do NOT regress.
+    path     = tmp_path / "mix.txt"
+    original = b"str and bytes agree\n"
+    path.write_bytes(original)
+
+    pydlock.lock(str(path), password=STR_PASSWORD)          # locked with str
+    assert pydlock.unlock(str(path), password=PASSWORD) is True   # unlocked with bytes
+    assert path.read_bytes() == original
+
+    pydlock.lock(str(path), password=PASSWORD)              # locked with bytes
+    assert pydlock.unlock(str(path), password=STR_PASSWORD) is True  # unlocked with str
+    assert path.read_bytes() == original
+
+
+def test_str_password_decrypts_v1_legacy(tmp_path):
+
+    # The str normalisation must also cover the v1 legacy (SHA-256) path, not
+    # just v2 scrypt: a str password decrypts a committed v1 fixture.
+    fixture = (FIXTURES / "v1_legacy.locked").read_bytes()
+    path    = tmp_path / "legacy.locked"
+    path.write_bytes(fixture)
+
+    assert pydlock.decrypt(str(path), password=V1_PASSWORD.decode("utf-8")) == V1_PLAINTEXT
+
+
 # --- malicious / malformed v2 envelope rejection (security regression) -------
 
 

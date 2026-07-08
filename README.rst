@@ -11,7 +11,7 @@ files. Lock a file with one command, unlock it with another — that is the
 whole product. It can be used from the command line or imported as a Python
 package.
 
-As of **2.0.0** your password is protected with a salted, memory-hard
+As of **2.0** your password is protected with a salted, memory-hard
 **scrypt** key derivation, files of *any* kind (including binaries and Windows
 executables) round-trip losslessly, and writes are crash-safe.
 
@@ -116,10 +116,10 @@ In other Python modules
 
 
 =========================
-What's new in 2.0.0
+What's new in 2.0
 =========================
 
-Version 2.0.0 is a **breaking change to the on-disk format**. Files are now
+Version 2.0 is a **breaking change to the on-disk format**. Files are now
 written as a small self-identifying *envelope* — a ``PYDLOCK`` magic marker, a
 JSON header carrying the key-derivation parameters and a per-file random salt,
 and then the encrypted token — instead of a bare token.

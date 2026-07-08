@@ -54,7 +54,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase B — core v2 behavior (the fix; v2.0.0)
 
-- [ ] 3. **scrypt KDF + versioned envelope** (design §The envelope format, §Key decisions D3).
+- [x] 3. **scrypt KDF + versioned envelope** (design §The envelope format, §Key decisions D3).
   Move key derivation out of the password prompt and into `encrypt`/`decrypt` where the salt is
   available. On `encrypt`: generate a fresh 16-byte `os.urandom` salt, derive
   `key = urlsafe_b64encode(Scrypt(salt, length=32, n=2**15, r=8, p=1).derive(password_bytes))`,

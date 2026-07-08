@@ -55,3 +55,34 @@ progress signal) and **never** a done-signal.
 - **`.gitignore` now exists** (mirrors cosmic's: `__pycache__/`, `*.py[cod]`, `.pytest_cache/`,
   `build/`, `dist/`, `*.egg-info/`, venvs). This fixes the item-1 gotcha where `git add -A`
   swept in `__pycache__/*.pyc` (had to amend); `git add -A` is now safe.
+
+## 2026-07-08 — item 3 (scrypt KDF + versioned envelope)
+
+- **Derivation model change is the crux:** `password_prompt`/`double_password_prompt` now
+  return the *password as bytes* (not a pre-derived Fernet key). The key is derived inside
+  `encrypt`/`decrypt` where the per-file salt exists. The `key=` parameter on
+  encrypt/decrypt/lock/unlock/python/run was renamed `password=` to match (CLI in `__main__.py`
+  passes only 3 positional args, so no `__main__` change was needed).
+- **Envelope layout implemented exactly per design:** `b"PYDLOCK\x02\n"` + compact UTF-8 JSON
+  header `{"kdf":"scrypt","n":32768,"r":8,"p":1,"salt":"<std-b64>"}` + `b"\n"` + Fernet token.
+  Detection on the 8-byte prefix `b"PYDLOCK\x02"`; parse via two `partition(b"\n")` splits.
+- **Scope kept tight (do NOT redo in later items):**
+  - *Ciphertext* I/O is bytes-mode here (the magic byte forces it) — `lock` writes `wb`,
+    `decrypt` reads `rb`. But *plaintext* I/O is still text-mode/encoding-coupled
+    (`encrypt` reads `"r"`, `unlock` writes `"w+"`) — the binary-file corruption bug is
+    **still present** and is **item 4** (bytes-mode plaintext + atomic writes).
+  - Non-v2 (no-magic) file → explicit `ValueError` for now; the **v1 legacy-decrypt path is
+    item 5**, which will replace that error branch (and re-add the `sha256` import I removed
+    here as now-unused).
+  - `python`/`run` kept (rewritten only for the `password` rename); their **removal +
+    `encrypt`/`decrypt` aliases + full type-hint pass + docstring-typo fix is item 6**.
+- **kdf dispatch left open, pbkdf2 NOT implemented** (reversible/internal call): `_derive_key`
+  handles `"scrypt"`; any other id (incl. a future `"pbkdf2"`) raises `ValueError` — no
+  speculative untested crypto. The design documents pbkdf2 as a *carried* fallback id, not a
+  required writer path, so "leave the dispatch open + clear error on unknown" satisfies item 3.
+- **Salt stored as standard base64** in the header (`b64encode`); the derived *key* uses
+  `urlsafe_b64encode` (Fernet's required key format). Both JSON-safe; not a fork worth an item.
+- Verified in a venv: round-trip (text), envelope format + param read-back, per-file salt
+  uniqueness, wrong-password → clean `False` with file untouched, tampered token → clean
+  `False` (Fernet HMAC), unknown-kdf → `ValueError`. The committed pytest suite is **item 7**
+  (this functional check was throwaway, not committed).

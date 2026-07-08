@@ -54,31 +54,16 @@ License:
 
 '''
 
-# Standard library imports.
-import json
-import os
-
 # Constant definitions.
-_MODULE_PATH = os.path.dirname(os.path.realpath(__file__))
 PACKAGE_NAME = "pydlock"
-VERSION_FILE = os.path.join(_MODULE_PATH, "version.json")
-
-with open(VERSION_FILE, "r") as file:
-    
-    # Versioning system: SemVer
-    #  - MAJOR: Incremented for incompatible API changes.
-    #  - MINOR: Incremented for new backwards compatible functionality.
-    #  - PATCH: Incremented for make backwards compatible bug fixes.
-    # For more info: https://semver.org/
-    AUTHOR  = "Erick Edward Shepherd"
-    VERSION = json.load(file)
+AUTHOR       = "Erick Edward Shepherd"
 
 DEFAULT_ENCODING = "utf-8"
 
 # Module dunder definitions.
 __author__  = AUTHOR
-__version__ = (
-    f"{VERSION['major']}."
-    f"{VERSION['minor']}."
-    f"{VERSION['patch']}."
-)
+
+# Single source of truth for the package version (SemVer, https://semver.org/).
+# Read at runtime as ``pydlock.__version__`` and at build time by hatchling
+# (``[tool.hatch.version] path = "pydlock/constants.py"`` in pyproject.toml).
+__version__ = "2.0.0"

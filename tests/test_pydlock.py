@@ -270,15 +270,20 @@ def test_oversized_salt_rejected(tmp_path):
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
 
 
-def test_validation_accepts_ceiling_values():
+def test_validation_accepts_memory_product_ceiling():
 
-    # The bounds are inclusive: parameters exactly at the ceilings (with a
-    # max-length salt) are valid and must NOT raise. Checked directly so no
-    # multi-GiB derivation is attempted.
+    # A genuinely-derivable set that lands exactly ON the memory-product cap
+    # (128 * 2**18 * 8 == 256 MiB == MAX_SCRYPT_MEM_BYTES) with a max-length
+    # salt is valid and must NOT raise: the product bound is inclusive, and the
+    # cap does not reject legitimate strong-but-bounded parameters. Checked
+    # directly so no multi-GiB derivation is attempted. NB the FACTOR ceilings
+    # (SCRYPT_MAX_N, SCRYPT_MAX_R) together now EXCEED the product cap by design
+    # (see test_in_factor_bounds_but_over_memory_product_rejected), so they can
+    # no longer be asserted acceptable as a combined set.
+    n, r, p = 2 ** 18, 8, 1
+    assert 128 * n * r == pydlock.MAX_SCRYPT_MEM_BYTES
     salt = b"\x00" * pydlock.MAX_SALT_BYTES
-    assert pydlock._validate_scrypt_params(
-        pydlock.SCRYPT_MAX_N, pydlock.SCRYPT_MAX_R, pydlock.SCRYPT_MAX_P, salt
-    ) is None
+    assert pydlock._validate_scrypt_params(n, r, p, salt) is None
 
 
 def test_validation_rejects_just_over_ceiling():
@@ -286,6 +291,32 @@ def test_validation_rejects_just_over_ceiling():
     # The next power of two above the ceiling is rejected (proves strict '>').
     with pytest.raises(ValueError):
         pydlock._validate_scrypt_params(pydlock.SCRYPT_MAX_N * 2, 8, 1, b"salt")
+
+
+def test_in_factor_bounds_but_over_memory_product_rejected(tmp_path):
+
+    # The residual DoS: n and r each sit at their (individually legal) per-factor
+    # ceiling, yet 128 * n * r == 128 * 2**20 * 32 == 4 GiB, far over the 256 MiB
+    # product cap. Unbounded this hangs the victim (>2 min) or throws an uncaught
+    # MemoryError; the product check must reject it BEFORE Scrypt is constructed.
+    n, r, p = pydlock.SCRYPT_MAX_N, pydlock.SCRYPT_MAX_R, 1
+    assert 128 * n * r > pydlock.MAX_SCRYPT_MEM_BYTES   # in-factor-bounds, over-product
+
+    # (a) rejected directly by the validator, before any allocation.
+    with pytest.raises(ValueError):
+        pydlock._validate_scrypt_params(n, r, p, os.urandom(pydlock.SALT_BYTES))
+
+    # (b) rejected via the REAL decrypt() path on a crafted v2 file: clean
+    #     sentinel, FAST (well under a second), no allocation/hang.
+    path   = tmp_path / "mem_bomb.locked"
+    header = {"kdf": "scrypt", "n": n, "r": r, "p": p, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    import time
+    start = time.monotonic()
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
+    assert time.monotonic() - start < 1.0, "product check must reject before Scrypt runs"
 
 
 def test_above_default_params_round_trip(tmp_path):

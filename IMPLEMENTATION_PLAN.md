@@ -83,7 +83,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
 
 ## Phase C — tests (offline)
 
-- [ ] 7. pytest suite, **all offline**, over small fixtures (plan §Phase 4, design §Key
+- [x] 7. pytest suite, **all offline**, over small fixtures (plan §Phase 4, design §Key
   decisions): encrypt→decrypt **round-trip for a text file AND a binary file** (the binary case
   pins the bytes-mode fix); **wrong password fails cleanly** (clear message/return, original file
   untouched, no traceback); **per-file salt uniqueness** (locking the same file+password twice

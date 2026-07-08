@@ -60,6 +60,7 @@ Notes:
 # Standard library imports.
 import json
 import os
+import shutil
 import tempfile
 from base64 import b64decode
 from base64 import b64encode
@@ -308,6 +309,26 @@ def _atomic_write(path : str, data : bytes) -> None:
             file.write(data)
             file.flush()
             os.fsync(file.fileno())
+
+        # mkstemp creates the temp file 0600, so without this the atomic swap
+        # would silently tighten the target's permissions on every round-trip.
+        # When the target already exists, copy its mode (and best-effort its
+        # owner/group) onto the temp before the replace, so a 0644 file stays
+        # 0644. A fresh target keeps the safe 0600 default.
+        if os.path.exists(path):
+
+            shutil.copystat(path, temporary_path)
+
+            try:
+
+                original = os.stat(path)
+                os.chown(temporary_path, original.st_uid, original.st_gid)
+
+            except (OSError, AttributeError):
+
+                # chown typically requires privilege (and os.chown is absent on
+                # Windows); preserving owner/group is best-effort only.
+                pass
 
         os.replace(temporary_path, path)
 

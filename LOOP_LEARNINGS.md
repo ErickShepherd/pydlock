@@ -86,3 +86,24 @@ progress signal) and **never** a done-signal.
   uniqueness, wrong-password → clean `False` with file untouched, tampered token → clean
   `False` (Fernet HMAC), unknown-kdf → `ValueError`. The committed pytest suite is **item 7**
   (this functional check was throwaway, not committed).
+
+## 2026-07-08 — item 4 (bytes-mode I/O + atomic writes)
+
+- **Completes item 3's deferred plaintext I/O.** `encrypt` now reads the plaintext as `"rb"`
+  (raw bytes, no `.encode(encoding)`), `decrypt` returns `bytes` (dropped `.decode(encoding)`;
+  annotation `-> str` → `-> bytes`). This is the actual fix for the README's "unfixable"
+  binary/Windows-exe corruption — verified lossless round-trip over all 256 byte values incl.
+  NULs, and CRLF/NUL preserved (bytes-mode = no newline translation).
+- **`encoding` is now password-only** (design D6 "password encoding stays"): still passed to
+  `password_prompt`/`double_password_prompt`, no longer touches file contents. Left the param in
+  place on all functions — signature/type-hint cleanup is item 6.
+- **Atomic writes via a shared `_atomic_write(path, data: bytes)` helper**: `tempfile.mkstemp`
+  in the *same directory* (required for `os.replace` to be atomic — cross-fs replace fails),
+  write + `flush` + `os.fsync`, then `os.replace`; `except BaseException` best-effort removes
+  the temp file and re-raises. Both `lock` and `unlock` use it (no more in-place `"w+"`
+  truncate). Verified: a simulated interruption (patched `os.replace` to raise) leaves the
+  ORIGINAL file intact and leaks no `.pydlock-*.tmp`.
+- **No fork.** rb/wb and temp+os.replace are spec-pinned; same-dir temp + fsync are the
+  standard robust implementation, not a choice worth a DECIDE item.
+- Item 3's throwaway checks still pass (round-trip, salt uniqueness, wrong-pw/tamper clean-fail).
+  Committed pytest suite covering binary round-trip + interrupted-write is still **item 7**.

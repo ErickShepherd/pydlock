@@ -46,6 +46,7 @@ Usage:
 
 # Standard library imports.
 import os
+import sys
 from argparse import ArgumentParser
 
 # Local application imports.
@@ -79,7 +80,15 @@ def main() -> None:
     path     = kwargv["file"]
     encoding = kwargv["encoding"]
 
-    task(path, encoding)
+    # Capture the return value: unlock/decrypt return False on failure (e.g. a
+    # wrong password). Surface that as a non-zero exit code so scripts and
+    # pipelines can detect the failure. lock/encrypt return None on success and
+    # must NOT be treated as a failure, so test for False explicitly.
+    result = task(path, encoding)
+
+    if result is False:
+
+        sys.exit(1)
 
 
 if __name__ == "__main__":

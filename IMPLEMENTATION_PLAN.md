@@ -44,7 +44,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   `version.json`, `setup.py`, and `build.py`.** No behavior change (still v1 format, still has
   `python`/`run` — those go in Phase B).
   `verify: pip install -e . && python -c "import pydlock; assert pydlock.__version__ == '2.0.0'"`
-- [ ] 2. Metadata hygiene (plan §License, design D2 — MIT is already present, **no relicense**):
+- [x] 2. Metadata hygiene (plan §License, design D2 — MIT is already present, **no relicense**):
   add SPDX `license = "MIT"` in `pyproject.toml`; keep the MIT `LICENSE` file; replace the
   duplicated ~30-line MIT block atop each source file (`__init__.py`, `__main__.py`,
   `constants.py`) with a one-line `# SPDX-License-Identifier: MIT` header (keep the short

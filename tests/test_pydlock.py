@@ -319,6 +319,31 @@ def test_in_factor_bounds_but_over_memory_product_rejected(tmp_path):
     assert time.monotonic() - start < 1.0, "product check must reject before Scrypt runs"
 
 
+def test_high_p_cpu_bomb_rejected(tmp_path):
+
+    # The p-inclusive residual: n and r sit AT the memory-product ceiling (128 *
+    # n * r == 256 MiB, so a memory-only bound would ACCEPT it), but p=16
+    # multiplies scrypt's CPU work ~16x (128 * n * r * p == 4 GiB-equivalent) —
+    # a bounded-but-large CPU burn. The cost bound folds p in, so it must reject.
+    n, r, p = 2 ** 18, 8, pydlock.SCRYPT_MAX_P
+    assert 128 * n * r <= pydlock.MAX_SCRYPT_MEM_BYTES        # a memory-only bound would pass this
+    assert 128 * n * r * p > pydlock.MAX_SCRYPT_MEM_BYTES     # the cost bound (with p) rejects it
+
+    # (a) rejected directly by the validator, before any derivation.
+    with pytest.raises(ValueError):
+        pydlock._validate_scrypt_params(n, r, p, os.urandom(pydlock.SALT_BYTES))
+
+    # (b) rejected via the REAL decrypt() path, fast, no CPU burn.
+    path   = tmp_path / "cpu_bomb.locked"
+    header = {"kdf": "scrypt", "n": n, "r": r, "p": p, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    import time
+    start = time.monotonic()
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert time.monotonic() - start < 1.0, "cost check must reject before Scrypt runs"
+
+
 def test_above_default_params_round_trip(tmp_path):
 
     # A legitimate strong file (n above the encrypt-time default, still within

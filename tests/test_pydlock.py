@@ -74,6 +74,30 @@ def test_wrong_password_fails_cleanly(tmp_path):
     assert path.read_bytes() == envelope
 
 
+def test_decrypt_failure_diagnostic_goes_to_stderr(tmp_path, capsys):
+
+    # Decrypt diagnostics must go to stderr, never stdout (the plaintext may be
+    # piped to stdout), and use a single message that does not mislabel genuine
+    # corruption/tamper as a wrong password.
+    path = tmp_path / "secret.txt"
+    path.write_bytes(b"classified\n")
+    pydlock.lock(str(path), password=PASSWORD)
+
+    # (a) wrong password
+    assert pydlock.decrypt(str(path), password=b"wrong") is None
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "wrong password or corrupt file" in captured.err
+
+    # (b) a malformed/corrupt envelope hits the same single message on stderr.
+    bad = tmp_path / "bad.locked"
+    bad.write_bytes(MAGIC + b"{not valid json" + b"\n" + b"token")
+    assert pydlock.decrypt(str(bad), password=PASSWORD) is None
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "wrong password or corrupt file" in captured.err
+
+
 def test_per_file_salt_uniqueness(tmp_path):
 
     path = tmp_path / "dup.txt"

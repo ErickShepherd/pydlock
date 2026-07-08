@@ -61,6 +61,7 @@ Notes:
 import json
 import os
 import shutil
+import sys
 import tempfile
 from base64 import b64decode
 from base64 import b64encode
@@ -471,27 +472,26 @@ def decrypt(path     : str,
 
         return Fernet(key).decrypt(token)
 
-    except (InvalidToken, InvalidSignature):
+    # Every failure mode shares one clean sentinel and one diagnostic. Fernet's
+    # InvalidToken/InvalidSignature cover BOTH a wrong password and a
+    # tampered/corrupt token indistinguishably, so a single "wrong password or
+    # corrupt file" message avoids mislabelling genuine corruption as a bad
+    # password. The malformed-envelope classes: json.JSONDecodeError and
+    # binascii.Error are ValueError subclasses; KeyError covers a missing header
+    # field; TypeError a value of the wrong shape. The scrypt bounds (incl. the
+    # 128*n*r memory product) are enforced (ValueError) BEFORE Scrypt is ever
+    # constructed, so a huge allocation never fires. MemoryError and
+    # InternalError are defence in depth (a memory failure, or OpenSSL's own
+    # N < 2**(16*r) check surfacing). RecursionError (a RuntimeError subclass,
+    # NOT covered by the classes above) catches a deeply-nested-but-small
+    # crafted JSON header that makes json.loads recurse past the limit. The
+    # diagnostic goes to stderr, never stdout, since decrypted plaintext may be
+    # piped to stdout.
+    except (InvalidToken, InvalidSignature, ValueError, KeyError, TypeError,
+            MemoryError, InternalError, RecursionError):
 
-        print("Incorrect password.")
-
-        return None
-
-    # A malformed or incompatible envelope: json.JSONDecodeError and
-    # binascii.Error are both ValueError subclasses; KeyError covers a missing
-    # header field; TypeError covers a value of the wrong shape. The scrypt
-    # bounds (including the 128*n*r memory product) are enforced (ValueError)
-    # BEFORE Scrypt is ever constructed, so a huge allocation never fires.
-    # MemoryError and InternalError are caught as defence in depth: even if some
-    # param slipped through, a memory failure (or OpenSSL's own N < 2**(16*r)
-    # check surfacing) yields the clean sentinel, never a raw traceback.
-    # RecursionError (a RuntimeError subclass, so NOT covered by the classes
-    # above) is caught too: a deeply-nested-but-small crafted JSON header makes
-    # json.loads recurse past the interpreter limit, and must fail cleanly.
-    except (ValueError, KeyError, TypeError, MemoryError, InternalError,
-            RecursionError):
-
-        print("File is corrupted or incompatible.")
+        print("Could not decrypt (wrong password or corrupt file).",
+              file = sys.stderr)
 
         return None
 

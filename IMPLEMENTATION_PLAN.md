@@ -73,7 +73,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   the old scheme byte-for-byte:
   `key = urlsafe_b64encode(sha256(password).hexdigest()[:32].encode())`. `lock` **always writes
   v2**, so re-locking a v1 file upgrades it. Strand no data; the one-line UX is unchanged.
-- [ ] 6. **Remove `python`/`run`; add `encrypt`/`decrypt` aliases** (design Stage-0). Delete the
+- [x] 6. **Remove `python`/`run`; add `encrypt`/`decrypt` aliases** (design Stage-0). Delete the
   `python()` (`exec`) and `run()` (`subprocess … shell=True`) functions from
   `pydlock/__init__.py` and drop the now-dead `arguments` parameter threaded through
   `lock`/`unlock`. In `pydlock/__main__.py`, reduce the CLI to `{lock, unlock, encrypt, decrypt}`

@@ -40,3 +40,62 @@ def test_successful_unlock_exits_zero(monkeypatch):
     monkeypatch.setattr("sys.argv", ["pydlock", "unlock", "secret.txt"])
 
     assert cli.main() is None
+
+
+@pytest.mark.parametrize(
+    "verb, expected_fn",
+    [
+        ("lock",    "lock"),
+        ("unlock",  "unlock"),
+        ("encrypt", "lock"),    # encrypt is an alias for lock
+        ("decrypt", "unlock"),  # decrypt is an alias for unlock
+    ],
+)
+def test_verb_routes_to_expected_function(monkeypatch, verb, expected_fn):
+
+    # Each CLI verb must dispatch to the mapped function; encrypt/decrypt alias
+    # lock/unlock. Record which of lock/unlock was called and with what path.
+    calls = []
+
+    def record(name, result):
+        def fn(path, encoding):
+            calls.append((name, path, encoding))
+            return result
+        return fn
+
+    monkeypatch.setattr(pydlock, "lock",   record("lock", None))
+    monkeypatch.setattr(pydlock, "unlock", record("unlock", True))
+    monkeypatch.setattr("sys.argv", ["pydlock", verb, "secret.txt"])
+
+    cli.main()
+
+    assert len(calls) == 1
+    assert calls[0][0] == expected_fn
+
+
+def test_file_argument_coerced_to_absolute_path(monkeypatch):
+
+    # The ``file`` argument uses type=os.path.abspath, so a relative path is
+    # coerced to an absolute path before it reaches lock/unlock.
+    calls = []
+    monkeypatch.setattr(pydlock, "lock",
+                        lambda path, encoding: calls.append(path))
+    monkeypatch.setattr("sys.argv", ["pydlock", "lock", "relative.txt"])
+
+    cli.main()
+
+    assert calls == [os.path.abspath("relative.txt")]
+
+
+def test_encoding_flag_forwarded(monkeypatch):
+
+    # A non-default --encoding is parsed and forwarded to the task function.
+    calls = []
+    monkeypatch.setattr(pydlock, "lock",
+                        lambda path, encoding: calls.append(encoding))
+    monkeypatch.setattr("sys.argv",
+                        ["pydlock", "lock", "secret.txt", "--encoding", "latin-1"])
+
+    cli.main()
+
+    assert calls == ["latin-1"]

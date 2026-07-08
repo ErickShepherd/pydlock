@@ -151,3 +151,22 @@ progress signal) and **never** a done-signal.
   now-false "Windows executables corrupt / unfixable" Notes block (item 4 fixed that). This is
   in-scope for "reduce the CLI"; user-facing README is item 9.
 - Phase B (items 3-6, the v2 behavior) is now complete. No fork.
+
+## 2026-07-08 — item 7 (offline pytest suite + v1 fixture)
+
+- **`tests/test_pydlock.py`** — 9 tests, all offline, driven with explicit `password=` bytes so
+  nothing prompts via getpass: text round-trip, binary round-trip (all 256 byte values + NULs —
+  pins the bytes-mode fix), wrong-password → clean `False` + file untouched, per-file salt
+  uniqueness, KDF params read-back + used, tampered-token → `None`, tampered-header (corrupt
+  salt) → `None` (never wrong plaintext), atomic-write interrupt leaves original intact (patch
+  `os.replace` to raise; assert no `.pydlock-*` temp leak), and v1 legacy decrypt + upgrade.
+- **Committed v1 fixture `tests/fixtures/v1_legacy.locked`** (+ `PROVENANCE.md`): built with the
+  exact pre-2.0 scheme (`urlsafe_b64encode(sha256(pw).hexdigest()[:32].encode())` → raw Fernet
+  token, password `legacy-password`). The test copies it into `tmp_path` before mutating —
+  **never** mutate the committed fixture.
+- **pyproject:** added `[project.optional-dependencies] test = ["pytest"]` and
+  `[tool.pytest.ini_options] testpaths = ["tests"]` (matches cosmic). Ruff config is **item 8**.
+- **Gotcha:** the atomic-write test patches `os.replace` (the module-global that
+  `_atomic_write` calls), and asserts a `RuntimeError` propagates — confirms the helper doesn't
+  swallow write failures and cleans up its temp file.
+- `python -m pytest -q` (the item's verify oracle) → **9 passed**. No fork.

@@ -225,3 +225,22 @@ progress signal) and **never** a done-signal.
 - **Reminder:** the actual PyPI publish, tag, GitHub Release, and the environment
   required-reviewer setup are the **owner-gated tail (item 11 documents it)** — the loop only
   authors the dormant workflow, never runs it.
+
+## 2026-07-08 — item 11 (owner-gated release-checklist doc)
+
+- Wrote `docs/release-checklist.md` (Markdown, modeled on cosmic's), adding the three steps
+  cosmic didn't have: the **git-history email rewrite** (`<redacted private address>` →
+  `24425940+ErickShepherd@users.noreply.github.com`, display name kept; filter-repo mailmap or
+  filter-branch env-filter; set repo-local config; re-run leak-guard), the **force-push** of
+  rewritten history to the private remote, and **make-public**. Adapted for pydlock (version
+  assert instead of `--version`; v1-fixture smoke test; republish over the existing PyPI project).
+- **Documented a safe ordering that differs from the plan's one-line summary, and flagged why.**
+  The plan lists rewrite → force-push → make-public → merge; but the loop's own v2 commits carry
+  the private gmail, so they must be scrubbed *before* the repo is public. The doc therefore
+  recommends **merge → rewrite-all-history → confirm (leak-guard) → force-push → public → tag →
+  release → publish**, with a "critical invariant" section explaining the reconciliation. This
+  is guidance for the owner, not a code fork — no DECIDE item.
+- **Everything in the doc is owner-executed**; the loop authored nothing runnable here. No
+  `verify:` oracle (prose) → out-of-loop review discharges.
+- **This was the last checklist item — the ratchet is now 0.** The loop stops-and-surfaces the
+  `loop/v2-implementation` branch for `pre-merge-review`.

@@ -164,6 +164,150 @@ def test_atomic_write_interrupt_leaves_original(tmp_path, monkeypatch):
     assert list(tmp_path.glob(".pydlock-*")) == []
 
 
+# --- malicious / malformed v2 envelope rejection (security regression) -------
+
+
+def _v2_envelope(header: dict, token: bytes = b"not-a-real-token") -> bytes:
+
+    '''Hand-builds a v2 envelope: MAGIC + crafted JSON header + arbitrary token.'''
+
+    header_bytes = json.dumps(header, separators=(",", ":")).encode("utf-8")
+
+    return MAGIC + header_bytes + b"\n" + token
+
+
+def _good_salt() -> str:
+
+    return b64encode(os.urandom(pydlock.SALT_BYTES)).decode("ascii")
+
+
+def test_oversized_scrypt_n_rejected_without_allocation(tmp_path):
+
+    # A crafted header requesting n = 2**30 would demand ~= 128 * 2**30 * 8
+    # bytes (~1 TiB). Validation must reject it BEFORE Scrypt is constructed, so
+    # this returns the clean failure sentinel fast and never allocates.
+    path = tmp_path / "bomb.locked"
+    header = {"kdf": "scrypt", "n": 2 ** 30, "r": 8, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
+
+
+def test_oversized_scrypt_r_rejected(tmp_path):
+
+    path = tmp_path / "bomb_r.locked"
+    header = {"kdf": "scrypt", "n": 2 ** 15, "r": 1024, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_non_power_of_two_n_rejected(tmp_path):
+
+    path = tmp_path / "npot.locked"
+    header = {"kdf": "scrypt", "n": 2 ** 15 + 1, "r": 8, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_unknown_kdf_rejected(tmp_path):
+
+    path = tmp_path / "kdf.locked"
+    header = {"kdf": "argon2id", "n": 2 ** 15, "r": 8, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_malformed_header_bad_json(tmp_path):
+
+    path = tmp_path / "badjson.locked"
+    path.write_bytes(MAGIC + b"{not valid json" + b"\n" + b"token")
+
+    # Must hit the clean failure path, not raise JSONDecodeError.
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_malformed_header_missing_n(tmp_path):
+
+    path = tmp_path / "missing_n.locked"
+    header = {"kdf": "scrypt", "r": 8, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    # Missing 'n' would be a KeyError; must be caught cleanly.
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_malformed_header_n_as_string(tmp_path):
+
+    path = tmp_path / "str_n.locked"
+    header = {"kdf": "scrypt", "n": "32768", "r": 8, "p": 1, "salt": _good_salt()}
+    path.write_bytes(_v2_envelope(header))
+
+    # A string 'n' must be rejected by the type check, not passed to Scrypt.
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_malformed_header_non_base64_salt(tmp_path):
+
+    path = tmp_path / "badsalt.locked"
+    header = {"kdf": "scrypt", "n": 2 ** 15, "r": 8, "p": 1, "salt": "!!!not base64!!!"}
+    path.write_bytes(_v2_envelope(header))
+
+    # binascii.Error (a ValueError subclass) must be caught cleanly.
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_oversized_salt_rejected(tmp_path):
+
+    path = tmp_path / "bigsalt.locked"
+    big  = b64encode(b"\x00" * (pydlock.MAX_SALT_BYTES + 1)).decode("ascii")
+    header = {"kdf": "scrypt", "n": 2 ** 15, "r": 8, "p": 1, "salt": big}
+    path.write_bytes(_v2_envelope(header))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_validation_accepts_ceiling_values():
+
+    # The bounds are inclusive: parameters exactly at the ceilings (with a
+    # max-length salt) are valid and must NOT raise. Checked directly so no
+    # multi-GiB derivation is attempted.
+    salt = b"\x00" * pydlock.MAX_SALT_BYTES
+    assert pydlock._validate_scrypt_params(
+        pydlock.SCRYPT_MAX_N, pydlock.SCRYPT_MAX_R, pydlock.SCRYPT_MAX_P, salt
+    ) is None
+
+
+def test_validation_rejects_just_over_ceiling():
+
+    # The next power of two above the ceiling is rejected (proves strict '>').
+    with pytest.raises(ValueError):
+        pydlock._validate_scrypt_params(pydlock.SCRYPT_MAX_N * 2, 8, 1, b"salt")
+
+
+def test_above_default_params_round_trip(tmp_path):
+
+    # A legitimate strong file (n above the encrypt-time default, still within
+    # bounds) round-trips: validation does not reject valid-but-strong files.
+    path     = tmp_path / "strong.txt"
+    original = b"strong but bounded\n"
+    path.write_bytes(original)
+
+    n, r, p = 2 ** 16, 8, 1   # above the encrypt-time default n=2**15, well in bounds
+    salt = os.urandom(pydlock.SALT_BYTES)
+    key  = pydlock._derive_scrypt_key(PASSWORD, salt, n, r, p)
+    from cryptography.fernet import Fernet
+    token  = Fernet(key).encrypt(original)
+    header = {"kdf": "scrypt", "n": n, "r": r, "p": p,
+              "salt": b64encode(salt).decode("ascii")}
+    path.write_bytes(_v2_envelope(header, token))
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) == original
+
+
 # --- v1 legacy support (committed fixture; see tests/fixtures/PROVENANCE.md) ---
 
 V1_PASSWORD  = b"legacy-password"

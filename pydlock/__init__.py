@@ -103,14 +103,15 @@ SCRYPT_MAX_R   = 32                    # ceiling on the block size r
 SCRYPT_MAX_P   = 16                    # ceiling on the parallelisation p
 MAX_SALT_BYTES = 1024                  # ceiling on the decoded per-file salt length
 
-# Per-factor ceilings alone are NOT enough: scrypt memory is ~= 128 * n * r,
-# so n and r each at their (individually legal) ceiling still multiply out to a
-# ~4 GiB allocation (128 * 2**20 * 32). We therefore ALSO bound the memory
-# PRODUCT. The encrypt-time default (n=2**15, r=8) needs ~32 MiB, so a 256 MiB
-# cap leaves 8x headroom for a user who deliberately raises the cost factor
-# while still capping the worst-case bomb. A header exceeding this product is
-# treated as corrupt/incompatible, never as a valid instruction to allocate.
-MAX_SCRYPT_MEM_BYTES = 256 * 1024 * 1024   # 256 MiB ceiling on ~= 128 * n * r
+# Per-factor ceilings alone are NOT enough: n and r each at their (individually
+# legal) ceiling still multiply to a ~4 GiB allocation (128 * 2**20 * 32), and a
+# large p at the memory ceiling forces a bounded-but-large CPU burn (scrypt work
+# ~ n * r * p). We therefore bound the total COST PRODUCT (128 * n * r * p). The
+# encrypt-time default (n=2**15, r=8, p=1) needs ~32 MiB, so a 256 MiB budget
+# leaves 8x headroom for a user who deliberately raises the cost while still
+# capping the worst case (~256 MiB / ~0.5s). A header exceeding this budget is
+# treated as corrupt/incompatible, never as a valid instruction to allocate/burn.
+MAX_SCRYPT_MEM_BYTES = 256 * 1024 * 1024   # cost budget on 128 * n * r * p
 
 
 def password_prompt(encoding : str = DEFAULT_ENCODING,
@@ -178,10 +179,11 @@ def _validate_scrypt_params(n : object, r : object, p : object,
     SCRYPT_MAX_R``, ``p <= SCRYPT_MAX_P``) and the decoded salt no longer than
     ``MAX_SALT_BYTES``. The per-factor ceilings are NOT sufficient on their own
     (n and r each at their ceiling still multiply out to a ~4 GiB allocation),
-    so the scrypt memory PRODUCT (~= 128 * n * r) is additionally bounded by
-    ``MAX_SCRYPT_MEM_BYTES``. Anything outside these bounds raises ``ValueError``
-    and is treated by ``decrypt`` as a corrupt/incompatible file, never as a
-    valid instruction to allocate arbitrary memory.
+    so the total scrypt COST PRODUCT (128 * n * r * p — folding in p, which
+    multiplies CPU work) is additionally bounded by ``MAX_SCRYPT_MEM_BYTES``.
+    Anything outside these bounds raises ``ValueError`` and is treated by
+    ``decrypt`` as a corrupt/incompatible file, never as a valid instruction to
+    allocate arbitrary memory or burn arbitrary CPU.
 
     '''
 
@@ -212,14 +214,17 @@ def _validate_scrypt_params(n : object, r : object, p : object,
             f"scrypt parameter 'p' out of bounds: must be in [1, {SCRYPT_MAX_P}]."
         )
 
-    # Bound the memory PRODUCT, not just the individual factors: n and r each
-    # within their per-factor ceiling can still multiply to a multi-GiB scrypt
-    # allocation (~= 128 * n * r). Reject before Scrypt is ever constructed.
-    if 128 * n * r > MAX_SCRYPT_MEM_BYTES:
+    # Bound the total COST, not just the individual factors: n and r each within
+    # their per-factor ceiling can still multiply to a multi-GiB allocation, and
+    # p (parallelism) multiplies scrypt's CPU work (~ n * r * p) even though peak
+    # memory is ~= 128 * n * r. Folding p into the product caps BOTH the memory
+    # bomb (p=1) and the CPU-amplification bomb (large p at the memory ceiling).
+    # Reject before Scrypt is ever constructed.
+    if 128 * n * r * p > MAX_SCRYPT_MEM_BYTES:
 
         raise ValueError(
-            f"scrypt parameters demand too much memory: 128 * n * r = "
-            f"{128 * n * r} bytes exceeds {MAX_SCRYPT_MEM_BYTES}."
+            f"scrypt parameters demand too much work: 128 * n * r * p = "
+            f"{128 * n * r * p} exceeds the {MAX_SCRYPT_MEM_BYTES} cost budget."
         )
 
     if len(salt) > MAX_SALT_BYTES:

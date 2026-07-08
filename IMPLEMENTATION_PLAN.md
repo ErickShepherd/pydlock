@@ -109,7 +109,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   files decrypt transparently; re-`lock` to upgrade; `pydlock<2` as the documented fallback), a
   short **"how your password is protected now"** note (salted scrypt), the **binary-file fix**,
   the **removal of `python`/`run`**, and the new **`encrypt`/`decrypt` aliases**.
-- [ ] 10. Add `CHANGELOG` **v2.0.0** entry (convert `CHANGELOG.rst` to Markdown or keep RST;
+- [x] 10. Add `CHANGELOG` **v2.0.0** entry (convert `CHANGELOG.rst` to Markdown or keep RST;
   backfill prior entries + the v2 breaking-change/migration notes), a `CITATION.cff`, and
   `.github/workflows/publish.yml` — **OIDC Trusted Publishing**, approval-gated `pypi` /
   `testpypi` GitHub Environments, triggered on `release: [released]` + `workflow_dispatch`.

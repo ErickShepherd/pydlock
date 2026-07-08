@@ -204,3 +204,24 @@ progress signal) and **never** a done-signal.
 - Removed the old README's stale bits: `{lock,unlock,python,run}` help block, the
   `python -m pydlock python` example, and the full inline MIT text (now points at the LICENSE
   file). No fork.
+
+## 2026-07-08 — item 10 (CHANGELOG 2.0.0 + CITATION.cff + publish.yml)
+
+- **CHANGELOG format: kept RST** (the plan allowed Markdown *or* RST — reversible/internal, so
+  resolved autonomously toward consistency with the existing `CHANGELOG.rst` + `README.rst`).
+  Appended a `2026-07-08 - Version 2.0.0` entry in the file's existing chronological (oldest-top)
+  order, summarizing every v2 change (scrypt, envelope, v1 legacy, binary fix, atomic writes,
+  python/run removal, aliases, packaging/CI/OIDC). Did **not** fabricate a 1.3.0 entry (no
+  provenance for what it changed); the clean jump to 2.0.0 matches the design's single-source
+  2.0.0 decision.
+- **`.github/workflows/publish.yml`: verbatim copy of cosmic's** — it is fully project-agnostic
+  (builds `dist/`, no name references), so no adaptation was needed. OIDC Trusted Publishing
+  (`id-token: write`), approval-gated `pypi`/`testpypi` GitHub Environments, triggered on
+  `release: [released]` + `workflow_dispatch`. **No stored token / secret** (verified by scan).
+- **`CITATION.cff`** adapted from cosmic's: title `pydlock`, version `2.0.0`, date-released
+  `2026-07-08`, keywords mirroring pyproject. Validated as YAML + required-keys present.
+- **No `verify:` oracle** (docs/config) → out-of-loop review discharges. Sanity-checked by
+  YAML-parsing both files and a secret scan (none). No fork.
+- **Reminder:** the actual PyPI publish, tag, GitHub Release, and the environment
+  required-reviewer setup are the **owner-gated tail (item 11 documents it)** — the loop only
+  authors the dormant workflow, never runs it.

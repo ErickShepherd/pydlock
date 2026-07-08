@@ -1,4 +1,4 @@
-# Release checklist — pydlock v2.0.0
+# Release checklist — pydlock v2.0.1
 
 The **owner-gated tail** of the v2 effort. Everything in the implementation
 plan (`IMPLEMENTATION_PLAN.md`, items 1–10) is done on the
@@ -36,7 +36,7 @@ Recommended order:
 | 3 | Rewrite author/committer email across all history | yes |
 | 4 | Force-push rewritten history to the private remote | yes |
 | 5 | Make the repository public | yes |
-| 6 | Tag `v2.0.0` + GitHub Release | yes |
+| 6 | Tag `v2.0.1` + GitHub Release | yes |
 | 7 | Publish to PyPI (OIDC) | yes |
 
 ---
@@ -56,8 +56,8 @@ Recommended order:
 - [ ] `ruff check .` — clean.
 - [ ] `python -m build` — sdist + wheel build.
 - [ ] `twine check dist/*` — both distributions PASS.
-- [ ] In a fresh venv, `pip install dist/pydlock-2.0.0-py3-none-any.whl`, then
-      `python -c "import pydlock; assert pydlock.__version__ == '2.0.0'"` and a
+- [ ] In a fresh venv, `pip install dist/pydlock-2.0.1-py3-none-any.whl`, then
+      `python -c "import pydlock; assert pydlock.__version__ == '2.0.1'"` and a
       `pydlock lock` / `pydlock unlock` round-trip on a scratch file.
 - [ ] Smoke-test the legacy path: `pydlock unlock` a copy of
       `tests/fixtures/v1_legacy.locked` with password `legacy-password`.
@@ -113,19 +113,19 @@ erickeshepherd@gmail.com  ->  24425940+ErickShepherd@users.noreply.github.com
 
 ## 6. Tag the release + GitHub Release (owner-gated) — after merge + rewrite
 
-- [ ] Confirm `pydlock/constants.py` `__version__ == "2.0.0"` and the
-      `CHANGELOG.rst` `2.0.0` entry is accurate and dated.
+- [ ] Confirm `pydlock/constants.py` `__version__ == "2.0.1"` and the
+      `CHANGELOG.rst` `2.0.1` entry is accurate and dated.
 - [ ] Annotated tag on the rewritten `master` HEAD:
-      `git tag -a v2.0.0 -m "pydlock v2.0.0"`.
-- [ ] `git push origin v2.0.0`.
+      `git tag -a v2.0.1 -m "pydlock v2.0.1"`.
+- [ ] `git push origin v2.0.1`.
 - [ ] Verify GitHub Actions CI (`.github/workflows/ci.yml`) runs green on the
       pushed commit (ruff + pytest matrix 3.10–3.13 + build/twine).
-- [ ] Create a GitHub Release from the `v2.0.0` tag, pasting the `CHANGELOG.rst`
-      `2.0.0` section as the release notes.
+- [ ] Create a GitHub Release from the `v2.0.1` tag, pasting the `CHANGELOG.rst`
+      `2.0.1` section as the release notes.
 
 ## 7. Publish to PyPI (owner-gated, OIDC) — republish over the existing project
 
-`pydlock` already exists on PyPI, so this republishes v2.0.0 over the existing
+`pydlock` already exists on PyPI, so this republishes v2.0.1 over the existing
 project as its owner. Publishing is automated via **PyPI Trusted Publishing
 (OIDC)** — `.github/workflows/publish.yml` uploads with **no stored token**.
 
@@ -147,7 +147,7 @@ Per release:
       smoke-test.
 - [ ] Production: publishing the GitHub Release auto-runs the workflow to PyPI
       (or dispatch with target `pypi`); approve the `pypi` environment prompt.
-- [ ] Verify `pip install pydlock` from PyPI resolves to `2.0.0` in a clean venv
+- [ ] Verify `pip install pydlock` from PyPI resolves to `2.0.1` in a clean venv
       and `pydlock lock` / `unlock` work.
 
 ---

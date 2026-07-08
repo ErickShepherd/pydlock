@@ -107,8 +107,8 @@ from pydlock.constants import DEFAULT_ENCODING
 __author__  = pydlock.__author__
 __version__ = pydlock.__version__
 
-if __name__ == "__main__":
-    
+def main() -> None:
+
     # Maps function names to the respective function.
     function_map = {
         "lock"    : pydlock.lock,
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         "python"  : pydlock.python,
         "run"     : pydlock.run
     }
-    
+
     # Parses command-line arguments from the user.
     parser = ArgumentParser()
     parser.add_argument("operation",   choices = function_map.keys())
@@ -124,12 +124,17 @@ if __name__ == "__main__":
     parser.add_argument("--arguments", type = str, default = "")
     parser.add_argument("--encoding",  type = str, default = DEFAULT_ENCODING)
     kwargv = vars(parser.parse_args())
-    
+
     # Aliases parsed command-line arguments for brevity.
     task      = function_map[kwargv["operation"]]
     path      = kwargv["file"]
     arguments = kwargv["arguments"]
     encoding  = kwargv["encoding"]
-    
+
     # Performs the indicated task.
     task(path, arguments, encoding)
+
+
+if __name__ == "__main__":
+
+    main()

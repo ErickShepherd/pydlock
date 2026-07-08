@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pydlock"
+dynamic = ["version"]
+description = "A simple Python package for encrypting and decrypting files."
+readme = "README.rst"
+requires-python = ">=3.10"
+authors = [
+    { name = "Erick Shepherd", email = "Contact@ErickShepherd.com" },
+]
+keywords = ["encryption", "decryption", "cryptography", "file", "password", "Fernet"]
+dependencies = [
+    # The core v1 bug: no declared runtime dependency, so `pip install pydlock`
+    # broke on first use. The floor tracks the versions the Phase-D CI matrix
+    # (item 8, Python 3.10-3.13) is expected to pass against; loosening below
+    # this is an out-of-loop decision.
+    "cryptography>=43.0",
+]
+
+[project.scripts]
+pydlock = "pydlock.__main__:main"
+
+[project.urls]
+Homepage = "https://github.com/ErickShepherd/pydlock"
+Source = "https://github.com/ErickShepherd/pydlock"
+"Bug Tracker" = "https://github.com/ErickShepherd/pydlock/issues"
+
+[tool.hatch.version]
+path = "pydlock/constants.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pydlock"]

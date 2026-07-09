@@ -16,6 +16,24 @@ As of **2.0** your password is protected with a salted, memory-hard
 executables) round-trip losslessly, and writes are crash-safe.
 
 
+=====================
+Problems this solves
+=====================
+
+Reach for pydlock if you are trying to:
+
+- **Password-encrypt a file from the command line** — one command to lock,
+  one to unlock, nothing else to configure.
+- **Encrypt and decrypt a file in Python** with a two-function API
+  (``pydlock.lock`` / ``pydlock.unlock``) instead of wiring up a crypto library
+  yourself.
+- **Protect a file with a strong password-derived key** without designing your
+  own scheme — pydlock uses salted, memory-hard **scrypt** and authenticated
+  **Fernet** (AES-128-CBC + HMAC-SHA256), and adds no custom cryptography.
+- **Encrypt binaries safely** — files of any kind round-trip byte-for-byte, and
+  writes are crash-safe (atomic replace).
+
+
 ============
 Installation
 ============

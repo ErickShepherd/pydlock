@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pydlock"
 dynamic = ["version"]
-description = "A simple Python package for encrypting and decrypting files."
+description = "Dead-simple password-based file encryption for the command line and Python (scrypt + Fernet)."
 readme = "README.rst"
 requires-python = ">=3.10"
 authors = [
@@ -13,7 +13,25 @@ authors = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = ["encryption", "decryption", "cryptography", "file", "password", "Fernet"]
+keywords = [
+    "encryption", "decryption", "file encryption", "password",
+    "cryptography", "scrypt", "Fernet", "AES", "symmetric encryption",
+    "command line",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security :: Cryptography",
+    "Topic :: Utilities",
+]
 dependencies = [
     # The core v1 bug: no declared runtime dependency, so `pip install pydlock`
     # broke on first use. The floor tracks the versions the Phase-D CI matrix

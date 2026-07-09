@@ -472,6 +472,14 @@ def decrypt(path     : str,
 
             header = json.loads(header_bytes.decode("utf-8"))
 
+            # json.loads happily returns non-objects (int/list/str/null/…); a
+            # non-dict header would make _derive_key's header.get(...) raise an
+            # uncaught AttributeError on this same untrusted-input path. Reject
+            # it as corrupt so decrypt still fails cleanly.
+            if not isinstance(header, dict):
+
+                raise ValueError("pydlock header must be a JSON object.")
+
             key = _derive_key(header, password)
 
         else:

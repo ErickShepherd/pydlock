@@ -410,6 +410,21 @@ def test_deeply_nested_header_rejected_without_recursionerror(tmp_path):
     assert time.monotonic() - start < 1.0, "must reject fast, no deep recursion"
 
 
+@pytest.mark.parametrize("payload", ["123", "1.5", "[1,2,3]", '"a string"', "null", "true"])
+def test_non_object_header_rejected_without_attributeerror(tmp_path, payload):
+
+    # json.loads happily returns non-objects (int/list/str/null/bool). A non-dict
+    # header would make _derive_key's header.get(...) raise an uncaught
+    # AttributeError on the same untrusted-input path the RecursionError fix
+    # sealed — an 18-byte hostile file (b'PYDLOCK\x02\n123\ntoken') still crashed
+    # with a raw traceback. It must instead return the clean sentinel (None).
+    path = tmp_path / "nonobject.locked"
+    path.write_bytes(MAGIC + payload.encode("utf-8") + b"\n" + b"token")
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
+
+
 def test_validation_accepts_memory_product_ceiling():
 
     # A genuinely-derivable set that lands exactly ON the memory-product cap

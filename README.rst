@@ -113,8 +113,9 @@ A short example:
     user@computer:~$ cat secret.txt
     Shh! It's a secret!
 
-An entered-but-wrong password fails cleanly (``Incorrect password.``) and
-leaves the encrypted file untouched.
+An entered-but-wrong password fails cleanly — pydlock prints
+``Could not decrypt (wrong password or corrupt file).`` and leaves the
+encrypted file untouched.
 
 In other Python modules
 -----------------------

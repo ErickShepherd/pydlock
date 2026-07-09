@@ -65,6 +65,48 @@ modernization notes are retained below for the full history.
 
 
 ==========================
+2026-07-08 - Version 2.0.2
+==========================
+
+Audit remediation release (whole-file :code:`audit-repo` pass, 2026-07-08). No
+on-disk format change; every fix is backward compatible.
+
+* **Security: a malformed envelope always fails cleanly.** A crafted, deeply
+  nested JSON header made :code:`json.loads` recurse past the interpreter limit
+  and raise an uncaught :code:`RecursionError`, leaking a traceback on hostile
+  input. :code:`decrypt` now bounds the raw header length before parsing and
+  catches :code:`RecursionError` in the malformed-envelope handler, so such a
+  file returns the clean :code:`None` sentinel, fast, with no traceback. A
+  valid-JSON but non-object header (e.g. a bare number or list) is likewise
+  rejected as corrupt via an :code:`isinstance` guard, closing an adjacent
+  :code:`AttributeError` on the same untrusted-input path.
+
+* **CLI: a failed unlock now exits non-zero.** The CLI discarded the
+  :code:`lock`/:code:`unlock` return value, so a failed :code:`unlock` (wrong
+  password) exited :code:`0` and scripts could not detect the failure. It now
+  exits :code:`1` on failure.
+
+* **File permissions are preserved across a round-trip.** The atomic write
+  created its temp file :code:`0600` and swapped it into place, silently
+  tightening a :code:`0644` file to owner-only on every lock/unlock. The
+  original file's mode (and best-effort owner/group) is now copied onto the
+  temp before the swap; a newly created file keeps the safe :code:`0600`
+  default.
+
+* **Diagnostics go to stderr with one honest message.** Decrypt diagnostics
+  printed to stdout (where decrypted plaintext may be piped) and
+  :code:`"Incorrect password."` mislabelled genuine corruption/tamper. Both
+  failure paths now print a single
+  :code:`"Could not decrypt (wrong password or corrupt file)."` to stderr.
+
+* **Tests and internals.** Added a CLI test module covering :code:`__main__`
+  (verb dispatch, the encrypt/decrypt aliases, abspath coercion, encoding
+  forwarding, and the failure exit code) plus regression tests for each fix
+  above, and extracted a shared :code:`_normalise_password` helper. Refreshed
+  stale header dates.
+
+
+==========================
 2026-07-08 - Version 2.0.0
 ==========================
 

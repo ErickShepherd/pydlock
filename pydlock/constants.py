@@ -12,7 +12,7 @@ E-mail:        Contact@ErickShepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 PyPI:          https://pypi.org/project/pydlock/
 Date created:  2020-04-30
-Last modified: 2020-04-31
+Last modified: 2026-07-08
 
 
 Description:
@@ -34,4 +34,4 @@ __author__  = AUTHOR
 # Single source of truth for the package version (SemVer, https://semver.org/).
 # Read at runtime as ``pydlock.__version__`` and at build time by hatchling
 # (``[tool.hatch.version] path = "pydlock/constants.py"`` in pyproject.toml).
-__version__ = "2.0.1"
+__version__ = "2.0.2"

@@ -12,7 +12,7 @@ E-mail:        Contact@ErickShepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 PyPI:          https://pypi.org/project/pydlock/
 Date created:  2020-04-12
-Last modified: 2020-04-30
+Last modified: 2026-07-08
 
 
 Description:
@@ -60,6 +60,8 @@ Notes:
 # Standard library imports.
 import json
 import os
+import shutil
+import sys
 import tempfile
 from base64 import b64decode
 from base64 import b64encode
@@ -112,6 +114,14 @@ MAX_SALT_BYTES = 1024                  # ceiling on the decoded per-file salt le
 # capping the worst case (~256 MiB / ~0.5s). A header exceeding this budget is
 # treated as corrupt/incompatible, never as a valid instruction to allocate/burn.
 MAX_SCRYPT_MEM_BYTES = 256 * 1024 * 1024   # cost budget on 128 * n * r * p
+
+# Ceiling on the raw JSON header bytes read from an UNTRUSTED envelope, enforced
+# BEFORE json.loads. A well-formed header is ~100 bytes; this generous bound
+# rejects a pathologically large header (memory) as a corrupt/incompatible file
+# rather than feeding it to the parser. Note this alone does NOT stop a deeply
+# NESTED-but-small header (a few KiB of nested brackets already exceeds the
+# interpreter's recursion limit), so decrypt additionally catches RecursionError.
+MAX_HEADER_BYTES = 64 * 1024               # ceiling on the raw JSON header length
 
 
 def password_prompt(encoding : str = DEFAULT_ENCODING,
@@ -301,6 +311,26 @@ def _atomic_write(path : str, data : bytes) -> None:
             file.flush()
             os.fsync(file.fileno())
 
+        # mkstemp creates the temp file 0600, so without this the atomic swap
+        # would silently tighten the target's permissions on every round-trip.
+        # When the target already exists, copy its mode (and best-effort its
+        # owner/group) onto the temp before the replace, so a 0644 file stays
+        # 0644. A fresh target keeps the safe 0600 default.
+        if os.path.exists(path):
+
+            shutil.copystat(path, temporary_path)
+
+            try:
+
+                original = os.stat(path)
+                os.chown(temporary_path, original.st_uid, original.st_gid)
+
+            except (OSError, AttributeError):
+
+                # chown typically requires privilege (and os.chown is absent on
+                # Windows); preserving owner/group is best-effort only.
+                pass
+
         os.replace(temporary_path, path)
 
     except BaseException:
@@ -315,6 +345,23 @@ def _atomic_write(path : str, data : bytes) -> None:
             pass
 
         raise
+
+
+def _normalise_password(password : str | bytes, encoding : str) -> bytes:
+
+    '''
+
+    Normalises a password to bytes at the public API boundary. A library caller
+    may pass a ``str``, but scrypt (and the v1 legacy SHA-256 path) needs bytes;
+    a ``str`` is encoded with ``encoding``, while bytes pass through unchanged.
+
+    '''
+
+    if isinstance(password, str):
+
+        return password.encode(encoding)
+
+    return password
 
 
 def encrypt(path     : str,
@@ -337,13 +384,9 @@ def encrypt(path     : str,
 
         password = double_password_prompt(encoding)
 
-    # Normalise the password to bytes at the public API boundary: a library
-    # caller may pass a str, but scrypt (and the v1 legacy SHA-256 path) needs
-    # bytes. The CLI/getpass paths already yield bytes and pass through here
-    # unchanged.
-    if isinstance(password, str):
-
-        password = password.encode(encoding)
+    # Normalise the password to bytes at the public API boundary (see
+    # _normalise_password). The CLI/getpass paths already yield bytes.
+    password = _normalise_password(password, encoding)
 
     # Reads the plaintext as raw bytes so binary files (and Windows
     # executables) round-trip losslessly; only the password uses ``encoding``.
@@ -394,11 +437,10 @@ def decrypt(path     : str,
         password = password_prompt(encoding)
 
     # Normalise the password to bytes ONCE, before the v2/v1 branch below, so
-    # both the scrypt (v2) and legacy SHA-256 (v1) key derivations receive
-    # bytes regardless of whether the caller passed a str or bytes.
-    if isinstance(password, str):
-
-        password = password.encode(encoding)
+    # both the scrypt (v2) and legacy SHA-256 (v1) key derivations receive bytes
+    # regardless of whether the caller passed a str or bytes (see
+    # _normalise_password).
+    password = _normalise_password(password, encoding)
 
     with open(path, "rb") as file:
 
@@ -418,7 +460,25 @@ def decrypt(path     : str,
             # (validated) parameters.
             _, _, remainder        = data.partition(b"\n")
             header_bytes, _, token = remainder.partition(b"\n")
+
+            # Bound the raw header BEFORE parsing so a pathologically large
+            # header is rejected as corrupt rather than fed to json.loads.
+            if len(header_bytes) > MAX_HEADER_BYTES:
+
+                raise ValueError(
+                    f"pydlock header too long: {len(header_bytes)} bytes "
+                    f"exceeds {MAX_HEADER_BYTES}."
+                )
+
             header = json.loads(header_bytes.decode("utf-8"))
+
+            # json.loads happily returns non-objects (int/list/str/null/…); a
+            # non-dict header would make _derive_key's header.get(...) raise an
+            # uncaught AttributeError on this same untrusted-input path. Reject
+            # it as corrupt so decrypt still fails cleanly.
+            if not isinstance(header, dict):
+
+                raise ValueError("pydlock header must be a JSON object.")
 
             key = _derive_key(header, password)
 
@@ -432,23 +492,26 @@ def decrypt(path     : str,
 
         return Fernet(key).decrypt(token)
 
-    except (InvalidToken, InvalidSignature):
+    # Every failure mode shares one clean sentinel and one diagnostic. Fernet's
+    # InvalidToken/InvalidSignature cover BOTH a wrong password and a
+    # tampered/corrupt token indistinguishably, so a single "wrong password or
+    # corrupt file" message avoids mislabelling genuine corruption as a bad
+    # password. The malformed-envelope classes: json.JSONDecodeError and
+    # binascii.Error are ValueError subclasses; KeyError covers a missing header
+    # field; TypeError a value of the wrong shape. The scrypt bounds (incl. the
+    # 128*n*r memory product) are enforced (ValueError) BEFORE Scrypt is ever
+    # constructed, so a huge allocation never fires. MemoryError and
+    # InternalError are defence in depth (a memory failure, or OpenSSL's own
+    # N < 2**(16*r) check surfacing). RecursionError (a RuntimeError subclass,
+    # NOT covered by the classes above) catches a deeply-nested-but-small
+    # crafted JSON header that makes json.loads recurse past the limit. The
+    # diagnostic goes to stderr, never stdout, since decrypted plaintext may be
+    # piped to stdout.
+    except (InvalidToken, InvalidSignature, ValueError, KeyError, TypeError,
+            MemoryError, InternalError, RecursionError):
 
-        print("Incorrect password.")
-
-        return None
-
-    # A malformed or incompatible envelope: json.JSONDecodeError and
-    # binascii.Error are both ValueError subclasses; KeyError covers a missing
-    # header field; TypeError covers a value of the wrong shape. The scrypt
-    # bounds (including the 128*n*r memory product) are enforced (ValueError)
-    # BEFORE Scrypt is ever constructed, so a huge allocation never fires.
-    # MemoryError and InternalError are caught as defence in depth: even if some
-    # param slipped through, a memory failure (or OpenSSL's own N < 2**(16*r)
-    # check surfacing) yields the clean sentinel, never a raw traceback.
-    except (ValueError, KeyError, TypeError, MemoryError, InternalError):
-
-        print("File is corrupted or incompatible.")
+        print("Could not decrypt (wrong password or corrupt file).",
+              file = sys.stderr)
 
         return None
 

@@ -74,6 +74,30 @@ def test_wrong_password_fails_cleanly(tmp_path):
     assert path.read_bytes() == envelope
 
 
+def test_decrypt_failure_diagnostic_goes_to_stderr(tmp_path, capsys):
+
+    # Decrypt diagnostics must go to stderr, never stdout (the plaintext may be
+    # piped to stdout), and use a single message that does not mislabel genuine
+    # corruption/tamper as a wrong password.
+    path = tmp_path / "secret.txt"
+    path.write_bytes(b"classified\n")
+    pydlock.lock(str(path), password=PASSWORD)
+
+    # (a) wrong password
+    assert pydlock.decrypt(str(path), password=b"wrong") is None
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "wrong password or corrupt file" in captured.err
+
+    # (b) a malformed/corrupt envelope hits the same single message on stderr.
+    bad = tmp_path / "bad.locked"
+    bad.write_bytes(MAGIC + b"{not valid json" + b"\n" + b"token")
+    assert pydlock.decrypt(str(bad), password=PASSWORD) is None
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "wrong password or corrupt file" in captured.err
+
+
 def test_per_file_salt_uniqueness(tmp_path):
 
     path = tmp_path / "dup.txt"
@@ -143,6 +167,25 @@ def test_tampered_header_fails_never_wrong_plaintext(tmp_path):
     path.write_bytes(tampered)
 
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_lock_unlock_preserves_file_mode(tmp_path):
+
+    # _atomic_write writes via mkstemp (mode 0600) then os.replace, which would
+    # silently tighten a 0644 file to owner-only on every round-trip. The
+    # original file's mode must survive both lock and unlock.
+    import stat
+
+    path = tmp_path / "perms.txt"
+    path.write_bytes(b"mode must survive a round-trip\n")
+    os.chmod(path, 0o644)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644
+
+    pydlock.lock(str(path), password=PASSWORD)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644, "lock tightened the mode"
+
+    assert pydlock.unlock(str(path), password=PASSWORD) is True
+    assert stat.S_IMODE(path.stat().st_mode) == 0o644, "unlock tightened the mode"
 
 
 def test_atomic_write_interrupt_leaves_original(tmp_path, monkeypatch):
@@ -346,6 +389,40 @@ def test_oversized_salt_rejected(tmp_path):
     path.write_bytes(_v2_envelope(header))
 
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
+
+
+def test_deeply_nested_header_rejected_without_recursionerror(tmp_path):
+
+    # A crafted header whose JSON nests far deeper than the interpreter's
+    # recursion limit makes json.loads raise RecursionError (a RuntimeError
+    # subclass) — NOT in decrypt's caught tuple, so unpatched it escapes as a
+    # raw traceback on hostile input, violating the "fails cleanly" guarantee.
+    # It must instead return the clean sentinel (None), fast, no traceback.
+    path   = tmp_path / "nested.locked"
+    nested = ("[" * 30000) + ("]" * 30000)
+    header = ('{"kdf":' + nested + "}").encode("utf-8")
+    path.write_bytes(MAGIC + header + b"\n" + b"token")
+
+    import time
+    start = time.monotonic()
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
+    assert time.monotonic() - start < 1.0, "must reject fast, no deep recursion"
+
+
+@pytest.mark.parametrize("payload", ["123", "1.5", "[1,2,3]", '"a string"', "null", "true"])
+def test_non_object_header_rejected_without_attributeerror(tmp_path, payload):
+
+    # json.loads happily returns non-objects (int/list/str/null/bool). A non-dict
+    # header would make _derive_key's header.get(...) raise an uncaught
+    # AttributeError on the same untrusted-input path the RecursionError fix
+    # sealed — an 18-byte hostile file (b'PYDLOCK\x02\n123\ntoken') still crashed
+    # with a raw traceback. It must instead return the clean sentinel (None).
+    path = tmp_path / "nonobject.locked"
+    path.write_bytes(MAGIC + payload.encode("utf-8") + b"\n" + b"token")
+
+    assert pydlock.decrypt(str(path), password=PASSWORD) is None
+    assert pydlock.unlock(str(path), password=PASSWORD) is False
 
 
 def test_validation_accepts_memory_product_ceiling():

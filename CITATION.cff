@@ -10,8 +10,8 @@ authors:
   - family-names: "Shepherd"
     given-names: "Erick"
     email: "Contact@ErickShepherd.com"
-version: "2.0.2"
-date-released: "2026-07-08"
+version: "2.0.3"
+date-released: "2026-07-09"
 license: MIT
 repository-code: "https://github.com/ErickShepherd/pydlock"
 url: "https://github.com/ErickShepherd/pydlock"

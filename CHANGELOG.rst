@@ -107,6 +107,26 @@ on-disk format change; every fix is backward compatible.
 
 
 ==========================
+2026-07-09 - Version 2.0.3
+==========================
+
+Docs/packaging only — no code changes.
+
+* **README discoverability.** Added a "Problems this solves" section mapping
+  common natural-language queries (password-encrypting a file from the CLI or
+  Python, scrypt + Fernet file encryption) to the tool, and corrected the quoted
+  wrong-password message to match the actual output
+  (:code:`Could not decrypt (wrong password or corrupt file).`).
+
+* **Packaging metadata.** Added the previously-missing PyPI trove classifiers
+  (:code:`Topic :: Security :: Cryptography`, :code:`Topic :: Utilities`, and the
+  supported Python versions) and expanded keywords.
+
+* **Removed a stale docstring note** that claimed locking Windows executables
+  corrupts them; the v2 raw-bytes path round-trips them losslessly.
+
+
+==========================
 2026-07-08 - Version 2.0.0
 ==========================
 

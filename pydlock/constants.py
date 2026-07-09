@@ -34,4 +34,4 @@ __author__  = AUTHOR
 # Single source of truth for the package version (SemVer, https://semver.org/).
 # Read at runtime as ``pydlock.__version__`` and at build time by hatchling
 # (``[tool.hatch.version] path = "pydlock/constants.py"`` in pyproject.toml).
-__version__ = "2.0.2"
+__version__ = "2.0.3"

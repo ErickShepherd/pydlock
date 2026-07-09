@@ -76,7 +76,10 @@ on-disk format change; every fix is backward compatible.
   and raise an uncaught :code:`RecursionError`, leaking a traceback on hostile
   input. :code:`decrypt` now bounds the raw header length before parsing and
   catches :code:`RecursionError` in the malformed-envelope handler, so such a
-  file returns the clean :code:`None` sentinel, fast, with no traceback.
+  file returns the clean :code:`None` sentinel, fast, with no traceback. A
+  valid-JSON but non-object header (e.g. a bare number or list) is likewise
+  rejected as corrupt via an :code:`isinstance` guard, closing an adjacent
+  :code:`AttributeError` on the same untrusted-input path.
 
 * **CLI: a failed unlock now exits non-zero.** The CLI discarded the
   :code:`lock`/:code:`unlock` return value, so a failed :code:`unlock` (wrong

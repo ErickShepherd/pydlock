@@ -35,24 +35,6 @@ Usage:
             print("Shh! It's a secret!", file = file)
             
         pydlock.lock(filename)
-    
-
-
-Notes:
-    
-    Issues with use on Windows executables:
-    
-        Because the files are modified, locking and unlocking executables on
-        Windows does not preserve their checksum. Consequently, after locking
-        and unlocking an executable on Windows, when an execution is attempted,
-        the system raises an error for security purposes:
-    
-            "This version of <file> is not compatible with the version of
-            Windows you're running. Check your computer's system information
-            and then contact the software publisher."
-        
-        There does not appear to be a simple resolution for this issue, and the
-        files effectively become corrupted.
 
 '''
 

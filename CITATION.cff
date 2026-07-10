@@ -11,8 +11,8 @@ authors:
     given-names: "Erick Edward"
     email: "Contact@ErickShepherd.com"
     orcid: "https://orcid.org/0000-0002-4750-6100"
-version: "2.0.3"
-date-released: "2026-07-09"
+version: "2.0.4"
+date-released: "2026-07-10"
 license: MIT
 repository-code: "https://github.com/ErickShepherd/pydlock"
 url: "https://github.com/ErickShepherd/pydlock"

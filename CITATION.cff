@@ -11,7 +11,7 @@ authors:
     given-names: "Erick Edward"
     email: "Contact@ErickShepherd.com"
     orcid: "https://orcid.org/0000-0002-4750-6100"
-version: "2.0.4"
+version: "2.0.5"
 date-released: "2026-07-10"
 doi: "10.5281/zenodo.21288807"
 license: MIT

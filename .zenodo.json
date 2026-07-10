@@ -1,0 +1,24 @@
+{
+  "upload_type": "software",
+  "title": "pydlock: Password-based file encryption for the command line and Python (scrypt + Fernet)",
+  "description": "A dead-simple Python tool and library for password-encrypting and decrypting files from the command line or Python, using a salted, memory-hard scrypt key derivation and authenticated Fernet (AES-128-CBC + HMAC-SHA256) encryption, with crash-safe atomic writes.",
+  "access_right": "open",
+  "license": "MIT",
+  "keywords": [
+    "encryption",
+    "decryption",
+    "file encryption",
+    "cryptography",
+    "scrypt",
+    "Fernet",
+    "AES",
+    "password",
+    "Python"
+  ],
+  "creators": [
+    {
+      "name": "Shepherd, Erick Edward",
+      "orcid": "0000-0002-4750-6100"
+    }
+  ]
+}

@@ -48,6 +48,7 @@ pydlock = "pydlock.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/ErickShepherd/pydlock"
+Documentation = "https://pydlock.readthedocs.io/en/latest/"
 Source = "https://github.com/ErickShepherd/pydlock"
 "Bug Tracker" = "https://github.com/ErickShepherd/pydlock/issues"
 

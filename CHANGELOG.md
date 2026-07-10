@@ -108,6 +108,23 @@ Citation metadata only — no code changes.
   `CITATION.cff`, so a Zenodo release archive registers a citable DOI with correct
   software metadata.
 
+## 2026-07-10 - Version 2.0.5
+
+Documentation site + metadata polish — no code changes. An independent
+review of the source and metadata this cycle returned "no change
+warranted".
+
+- **Read the Docs site.** Added a Sphinx documentation site
+  (<https://pydlock.readthedocs.io/>) with the API reference generated from
+  the docstrings (`lock`/`unlock`, `encrypt`/`decrypt`, and the prompt
+  helpers), and a `Documentation` URL in the PyPI project links. Shipping
+  the docs configuration in a tag also fixes RTD's tag-based "stable"
+  build.
+
+- **Docs/metadata polish.** Markdown README and prose docs (render on PyPI
+  as `text/markdown`), shields.io DOI badge, `erickshepherd.com` backlink,
+  and `main` as the default branch.
+
 ## 2026-07-08 - Version 2.0.0
 
 *Pre-release, TestPyPI only — never published to production PyPI; superseded by

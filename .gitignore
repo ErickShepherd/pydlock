@@ -18,3 +18,4 @@ htmlcov/
 venv/
 docs/audits/*.run.log
 docs/audits/*.audit-state.json
+docs/_build/

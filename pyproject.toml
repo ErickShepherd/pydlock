@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "pydlock"
 dynamic = ["version"]
 description = "Dead-simple password-based file encryption for the command line and Python (scrypt + Fernet)."
-readme = "README.rst"
+readme = "README.md"
 requires-python = ">=3.10"
 authors = [
     { name = "Erick Shepherd", email = "Contact@ErickShepherd.com" },

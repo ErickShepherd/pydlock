@@ -225,3 +225,4 @@ License
 -------
 
 Released under the MIT License. See the ``LICENSE`` file for the full text.
+Built by `Erick Shepherd <https://erickshepherd.com>`_.

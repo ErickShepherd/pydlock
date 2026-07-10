@@ -127,6 +127,17 @@ Docs/packaging only — no code changes.
 
 
 ==========================
+2026-07-10 - Version 2.0.4
+==========================
+
+Citation metadata only — no code changes.
+
+* **Zenodo/citation metadata.** Added a :code:`.zenodo.json` and an author ORCID
+  in :code:`CITATION.cff`, so a Zenodo release archive registers a citable DOI
+  with correct software metadata.
+
+
+==========================
 2026-07-08 - Version 2.0.0
 ==========================
 

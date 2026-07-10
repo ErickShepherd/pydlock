@@ -114,13 +114,13 @@ Scrub the private email from **all** history, keeping the display name. Target:
 ## 6. Tag the release + GitHub Release (owner-gated) — after merge + rewrite
 
 - [ ] Confirm `pydlock/constants.py` `__version__ == "2.0.1"` and the
-      `CHANGELOG.rst` `2.0.1` entry is accurate and dated.
+      `CHANGELOG.md` `2.0.1` entry is accurate and dated.
 - [ ] Annotated tag on the rewritten `master` HEAD:
       `git tag -a v2.0.1 -m "pydlock v2.0.1"`.
 - [ ] `git push origin v2.0.1`.
 - [ ] Verify GitHub Actions CI (`.github/workflows/ci.yml`) runs green on the
       pushed commit (ruff + pytest matrix 3.10–3.13 + build/twine).
-- [ ] Create a GitHub Release from the `v2.0.1` tag, pasting the `CHANGELOG.rst`
+- [ ] Create a GitHub Release from the `v2.0.1` tag, pasting the `CHANGELOG.md`
       `2.0.1` section as the release notes.
 
 ## 7. Publish to PyPI (owner-gated, OIDC) — republish over the existing project

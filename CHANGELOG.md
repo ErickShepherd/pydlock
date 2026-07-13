@@ -127,7 +127,7 @@ warranted".
 
 ## 2026-07-13 - Version 2.0.6
 
-Branding — no code changes.
+Branding and packaging-metadata polish — no code changes.
 
 - **Project logo.** Added a brand mark — a padlock formed by an ouroboros
   serpent (Python + padlock + a sealed loop) — under `brand/`: a light/dark
@@ -137,6 +137,11 @@ Branding — no code changes.
 
 - **Docs logo.** The Read the Docs sidebar now shows the mark (furo
   light/dark logo).
+
+- **Project URLs.** Standardized the PyPI project links: `Documentation`
+  now points at the released docs (`/en/stable/` rather than `/en/latest/`),
+  added a `Changelog` link to the GitHub releases, and renamed `Bug Tracker`
+  to `Issues`.
 
 ## 2026-07-08 - Version 2.0.0
 

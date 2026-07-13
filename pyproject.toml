@@ -48,9 +48,10 @@ pydlock = "pydlock.__main__:main"
 
 [project.urls]
 Homepage = "https://github.com/ErickShepherd/pydlock"
-Documentation = "https://pydlock.readthedocs.io/en/latest/"
+Documentation = "https://pydlock.readthedocs.io/en/stable/"
 Source = "https://github.com/ErickShepherd/pydlock"
-"Bug Tracker" = "https://github.com/ErickShepherd/pydlock/issues"
+Changelog = "https://github.com/ErickShepherd/pydlock/releases"
+Issues = "https://github.com/ErickShepherd/pydlock/issues"
 
 [tool.hatch.version]
 path = "pydlock/constants.py"

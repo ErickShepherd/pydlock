@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/pydlock-logo.png" alt="pydlock logo — a padlock formed by an ouroboros serpent" width="200">
+</p>
+
 # pydlock
 
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21288807-blue)](https://doi.org/10.5281/zenodo.21288807)

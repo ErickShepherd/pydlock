@@ -29,9 +29,10 @@ the wordmark recolours (dark ink → cream). The wordmark inside is glyph
 | Serpent | `#158881` |
 | Hardware (shackle, keyhole) | `#DB9A30` |
 
-Wordmark type: **Sora SemiBold** (weight 600), SIL Open Font License 1.1
-([`sora-600.ttf`](sora-600.ttf) — the OFL text travels embedded in the font's
-`name` table, license URL <https://scripts.sil.org/OFL>).
+Wordmark type: **Sora**, weight 600 (SemiBold)
+([`sora-600.ttf`](sora-600.ttf) — a weight-600 static instance of the Sora
+variable font). Licensed under the SIL Open Font License 1.1; the full license
+text is vendored alongside the font as [`OFL.txt`](OFL.txt).
 
 ## Notes
 

@@ -125,6 +125,19 @@ warranted".
   as `text/markdown`), shields.io DOI badge, `erickshepherd.com` backlink,
   and `main` as the default branch.
 
+## 2026-07-13 - Version 2.0.6
+
+Branding — no code changes.
+
+- **Project logo.** Added a brand mark — a padlock formed by an ouroboros
+  serpent (Python + padlock + a sealed loop) — under `brand/`: a light/dark
+  README lockup (`<picture>` theme-swap), the mark tile, and black/white
+  transparent mono variants. The wordmark uses Sora (SIL OFL 1.1), vendored
+  with its full license.
+
+- **Docs logo.** The Read the Docs sidebar now shows the mark (furo
+  light/dark logo).
+
 ## 2026-07-08 - Version 2.0.0
 
 *Pre-release, TestPyPI only — never published to production PyPI; superseded by

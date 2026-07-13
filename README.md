@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/ErickShepherd/pydlock/main/brand/pydlock-logo.png" alt="pydlock logo — a padlock formed by an ouroboros serpent" width="200">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/ErickShepherd/pydlock/main/brand/pydlock-lockup-dark.png">
+    <img alt="pydlock" src="https://raw.githubusercontent.com/ErickShepherd/pydlock/main/brand/pydlock-lockup.png" width="460">
+  </picture>
 </p>
 
 # pydlock

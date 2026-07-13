@@ -57,7 +57,11 @@ exclude_patterns = [
 
 html_theme = "furo"
 html_title = f"pydlock {release}"
+html_static_path = ["_static"]
 html_theme_options = {
+    # Brand mark in the sidebar — black on light theme, white on dark.
+    "light_logo": "pydlock-mark-black.png",
+    "dark_logo": "pydlock-mark-white.png",
     # Backlink to the author's site in the page footer.
     "footer_icons": [
         {

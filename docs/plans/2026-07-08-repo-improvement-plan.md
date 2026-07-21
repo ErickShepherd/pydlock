@@ -66,7 +66,7 @@ changes) and therefore does *not* fit the normal branch → review → merge mec
 dedicated, owner-supervised step that requires a force-push to the private remote
 (owner-gated). See Phase 1 and §5. (No secret keys, tokens, or credentials were found
 anywhere in history — history is otherwise clean. Note the docstrings' public contact
-address `Contact@ErickShepherd.com` is *intended* to be public and stays.)
+address `dev@erickshepherd.com` is *intended* to be public and stays.)
 
 ### License: already MIT (brief's "no LICENSE" finding is stale)
 
@@ -176,7 +176,7 @@ rewritten history, and making the repo public all stay owner-gated, outside ever
 - Set repo-local `git config user.email`/`user.name` to the noreply identity so future
   commits stay clean.
 - Verify no private gmail remains anywhere in the tree (the docstrings' public
-  `Contact@ErickShepherd.com` is intended and stays); re-run leak-guard to confirm clean.
+  `dev@erickshepherd.com` is intended and stays); re-run leak-guard to confirm clean.
 - **Gate:** leak-guard clean over the rewritten history; owner acknowledges the rewrite
   requires a force-push to the private remote (that push stays in the owner-gated tail, §5).
 

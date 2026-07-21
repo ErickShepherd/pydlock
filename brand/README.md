@@ -37,7 +37,7 @@ text is vendored alongside the font as [`OFL.txt`](OFL.txt).
 ## Notes
 
 These are **raster** assets. Vector (SVG) versions are deferred until
-[limner](https://github.com/ErickShepherd/limner) is ready to trace them; the
+a vectorization tool is ready to trace them; the
 flat, hard-edged art here is authored to trace cleanly when that lands.
 
 ## Regenerating the lockups

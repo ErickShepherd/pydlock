@@ -4,8 +4,8 @@
 
 Tests for the privacy guard (tools/privacy_scan.py). These pin two things:
 
-  1. the Gmail-address detector matches the pattern (a synthetic address) while
-     leaving the intentional public/domain address and noreply identities alone;
+  1. the detector matches synthetic Gmail and retired owner-domain addresses
+     while leaving the intended maintainer and noreply identities alone;
   2. the current tracked tree is clean.
 
 Neither the forbidden private address NOR any literal ``@gmail.com`` string is
@@ -31,6 +31,7 @@ _SCANNER_PATH = _REPO_ROOT / "tools" / "privacy_scan.py"
 # literal, scannable Gmail address (mirroring how the guard itself never stores
 # one). ``_addr`` builds a full synthetic address at runtime.
 _PROVIDER = b"gmail" + b".com"
+_OWNER_DOMAIN = b"erickshepherd" + b".com"
 
 
 def _addr(local: bytes) -> bytes:
@@ -65,12 +66,21 @@ def test_detects_a_gmail_address():
     assert matches[0].lower().endswith(b"@" + _PROVIDER)
 
 
+def test_detects_retired_owner_domain_address():
+
+    scanner = _load_scanner()
+
+    retired = b"contact" + b"@" + _OWNER_DOMAIN
+
+    assert scanner.scan_bytes(retired) == [retired]
+
+
 def test_ignores_public_domain_and_noreply_addresses():
 
     scanner = _load_scanner()
 
     benign = (
-        b"Contact@ErickShepherd.com\n"
+        b"dev@erickshepherd.com\n"
         b"24425940+ErickShepherd@users.noreply.github.com\n"
         b"dev@erickshepherd.com\n"
         b"noreply@github.com\n"
@@ -93,4 +103,4 @@ def test_tracked_tree_is_clean():
     files = scanner._iter_tracked_files()
     hits  = scanner.scan_files(files)
 
-    assert hits == 0, "a Gmail address leaked into the tracked tree"
+    assert hits == 0, "a private address leaked into the tracked tree"

@@ -48,7 +48,7 @@ progress signal) and **never** a done-signal.
   scratchpad `spdx.py`), not fragile Edit string-matching — the docstrings had trailing
   whitespace on "blank" lines. Pattern removed `Copyright:`→`...DEALINGS IN THE SOFTWARE.` and
   inserted `# SPDX-License-Identifier: MIT` after the coding line. Kept each file's short
-  authorship/contact docstring (incl. the intended public `Contact@ErickShepherd.com`).
+  authorship/contact docstring (incl. the intended public `dev@erickshepherd.com`).
 - **In scope only:** left `__main__.py`'s stale "Notes: Windows executables corrupt" docstring
   and the `python`/`run` usage text untouched — the corruption fix is item 4, the CLI reduction
   + docstring-typo fix is item 6. Did not touch them here.

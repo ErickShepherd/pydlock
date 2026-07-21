@@ -16,7 +16,7 @@ Please report security vulnerabilities **privately**, not in a public issue.
 
 - Preferred: open a report through GitHub **Private Vulnerability Reporting** at
   <https://github.com/ErickShepherd/pydlock/security/advisories/new>.
-- Alternatively, email **Contact@ErickShepherd.com**.
+- Alternatively, email **dev@erickshepherd.com**.
 
 Please include a description, affected version(s), and a minimal reproduction if
 possible. You can expect an initial acknowledgement within a few days. Fixes are

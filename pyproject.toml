@@ -9,7 +9,7 @@ description = "Dead-simple password-based file encryption for the command line a
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Erick Shepherd", email = "Contact@ErickShepherd.com" },
+    { name = "Erick Shepherd", email = "dev@erickshepherd.com" },
 ]
 license = "MIT"
 license-files = ["LICENSE"]

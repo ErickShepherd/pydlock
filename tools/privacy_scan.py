@@ -3,20 +3,20 @@
 
 '''
 
-Privacy guard: fail if a private Gmail address has leaked into the repository
-tree or a built distribution artifact.
+Privacy guard: fail if a private address has leaked into the repository tree or
+a built distribution artifact.
 
 The check exists because pydlock's history once carried the owner's private
 Gmail address in internal prose, and the default source distribution shipped
 those internal files. This scanner is the recurrence guard: it rejects any
 tracked file (or any file inside an extracted sdist/wheel) that contains a
-``…@gmail.com`` address.
+``…@gmail.com`` address or the retired owner-domain contact address.
 
 Crucially, the forbidden address is NEVER embedded in this repository. The
 scanner matches the *pattern* of a Gmail address, not a specific literal, so the
 guard itself does not reintroduce the leak it defends against. The public
-contact address on the owned domain (``Contact@ErickShepherd.com``) and GitHub
-noreply commit identities are deliberately not matched.
+maintainer address on the owned domain and GitHub noreply commit identities are
+deliberately not matched.
 
 Usage:
 
@@ -43,6 +43,13 @@ from pathlib import Path
 # address is never stored here.
 GMAIL_PATTERN = re.compile(rb"[A-Za-z0-9._%+-]+@gmail\.com", re.IGNORECASE)
 
+# The retired address is assembled so this guard never stores the forbidden
+# literal it is intended to catch.
+RETIRED_CONTACT_PATTERN = re.compile(
+    rb"contact" + rb"@" + rb"erickshepherd\.com",
+    re.IGNORECASE,
+)
+
 # Files that are legitimately binary or otherwise not worth scanning as text.
 # Binary content is skipped anyway (a NUL byte short-circuits the read), but
 # skipping by suffix avoids the read entirely for large assets.
@@ -56,7 +63,9 @@ def _redact(match: bytes) -> str:
 
     '''Renders a matched address for the report WITHOUT echoing the local part.'''
 
-    return "<redacted-local-part>@gmail.com"
+    if match.lower().endswith(b"@gmail.com"):
+        return "<redacted-local-part>@gmail.com"
+    return "<redacted-retired-address>"
 
 
 def _iter_tracked_files() -> list[Path]:
@@ -111,17 +120,19 @@ def _iter_path_files(paths: list[str]) -> list[Path]:
 
 def scan_bytes(data: bytes) -> list[bytes]:
 
-    '''Returns every Gmail-address match in a byte string (possibly empty).'''
+    '''Returns every private-address match in a byte string (possibly empty).'''
 
-    return GMAIL_PATTERN.findall(data)
+    matches = GMAIL_PATTERN.findall(data)
+    matches.extend(RETIRED_CONTACT_PATTERN.findall(data))
+    return matches
 
 
 def scan_files(files: list[Path]) -> int:
 
     '''
 
-    Scans each file and reports (redacted) any Gmail address found. Returns the
-    number of files that contained at least one match.
+    Scans each file and reports (redacted) any private address found. Returns
+    the number of files that contained at least one match.
 
     '''
 
@@ -162,8 +173,8 @@ def scan_files(files: list[Path]) -> int:
 def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(
-        description="Fail if a private Gmail address leaked into the tree or a "
-                    "built artifact (the address itself is never stored here).",
+        description="Fail if a private address leaked into the tree or a built "
+                    "artifact (the addresses themselves are never stored here).",
     )
     parser.add_argument(
         "--paths", nargs="+", metavar="PATH",
@@ -179,12 +190,12 @@ def main(argv: list[str] | None = None) -> int:
 
     if hits:
 
-        print(f"privacy_scan: FAILED — {hits} file(s) contain a Gmail address.",
+        print(f"privacy_scan: FAILED — {hits} file(s) contain a private address.",
               file=sys.stderr)
 
         return 1
 
-    print(f"privacy_scan: OK — {len(files)} file(s) scanned, no Gmail address.")
+    print(f"privacy_scan: OK — {len(files)} file(s) scanned, no private address.")
 
     return 0
 

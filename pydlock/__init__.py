@@ -48,6 +48,7 @@ import sys
 import tempfile
 from base64 import b64decode
 from base64 import b64encode
+from base64 import urlsafe_b64decode
 from base64 import urlsafe_b64encode
 from getpass import getpass
 from hashlib import sha256
@@ -339,11 +340,21 @@ def double_password_prompt(encoding : str = DEFAULT_ENCODING) -> bytes:
         password1 = password_prompt(encoding, "Enter password: ")
         password2 = password_prompt(encoding, "Re-enter password: ")
 
-        if password1 == password2:
+        if password1 != password2:
 
-            return password1
+            print("Password entries do not match. Try again.", end = "\n\n")
 
-        print("Password entries do not match. Try again.", end = "\n\n")
+            continue
+
+        # An empty password gives no protection (see _encrypt_contents); re-ask
+        # rather than accept it and fail later.
+        if password1 == b"":
+
+            print("Password must not be empty. Try again.", end = "\n\n")
+
+            continue
+
+        return password1
 
 
 def _derive_scrypt_key(password : bytes,
@@ -429,6 +440,35 @@ def _validate_scrypt_params(n : object, r : object, p : object,
         )
 
 
+def _strict_b64decode(text : str | bytes, *, urlsafe : bool) -> bytes:
+
+    '''
+
+    Decodes base64 STRICTLY: rejects any input that is not the exact canonical
+    encoding of the bytes it decodes to. The stdlib decoders default to
+    ``validate=False``, which silently DISCARDS characters outside the base64
+    alphabet — so appended garbage (e.g. ``b"!!!"`` after a Fernet token) would
+    decode to the same bytes and pass unnoticed. Requiring ``encode(decode(x))
+    == x`` rejects trailing garbage, embedded non-alphabet bytes, and
+    non-canonical padding. Raises ``ValueError`` (incl. ``binascii.Error`` and
+    ``UnicodeEncodeError``, both ``ValueError`` subclasses) on any deviation.
+
+    '''
+
+    raw = text.encode("ascii") if isinstance(text, str) else text
+
+    decoder = urlsafe_b64decode if urlsafe else b64decode
+    encoder = urlsafe_b64encode if urlsafe else b64encode
+
+    decoded = decoder(raw)
+
+    if encoder(decoded) != raw:
+
+        raise ValueError("non-canonical base64 (trailing garbage or padding).")
+
+    return decoded
+
+
 def _derive_key(header : dict, password : bytes) -> bytes:
 
     '''
@@ -446,7 +486,18 @@ def _derive_key(header : dict, password : bytes) -> bytes:
     if kdf_id == "scrypt":
 
         n, r, p = header["n"], header["r"], header["p"]
-        salt    = b64decode(header["salt"])
+
+        # Strict standard base64 (rejects noncanonical/garbage), and require the
+        # exact per-file salt length the v2 format promises — a wrong length is a
+        # corrupt/incompatible file, not a valid instruction.
+        salt = _strict_b64decode(header["salt"], urlsafe = False)
+
+        if len(salt) != SALT_BYTES:
+
+            raise ValueError(
+                f"pydlock v2 salt must be exactly {SALT_BYTES} bytes, "
+                f"got {len(salt)}."
+            )
 
         _validate_scrypt_params(n, r, p, salt)
 
@@ -584,6 +635,18 @@ def _encrypt_contents(contents : bytes,
     # _normalise_password). The CLI/getpass paths already yield bytes.
     password = _normalise_password(password, encoding)
 
+    # Reject an empty password on NEW encryption (T2 / A1). scrypt makes guessing
+    # expensive but cannot add entropy to an empty, universally-known password —
+    # encrypting with it is protection in name only. The prompt loop already
+    # re-asks on an empty entry; this also covers the library ``password=""`` /
+    # ``password=b""`` path. Recovery (decrypt/unlock) still ACCEPTS an empty
+    # password so a pre-existing empty-password file is never stranded.
+    if password == b"":
+
+        raise ValueError(
+            "refusing to encrypt with an empty password; a password is required."
+        )
+
     # Derives a fresh key from a per-file random salt.
     salt = os.urandom(SALT_BYTES)
     key  = _derive_scrypt_key(password, salt, SCRYPT_N, SCRYPT_R, SCRYPT_P)
@@ -640,11 +703,25 @@ def _decrypt_data(data     : bytes,
 
         if data.startswith(MAGIC_PREFIX):
 
-            # v2: split off the magic line, then the JSON header line, leaving
-            # the token, and re-derive the key from the header's salt and
-            # (validated) parameters.
-            _, _, remainder        = data.partition(b"\n")
-            header_bytes, _, token = remainder.partition(b"\n")
+            # v2: require EXACT framing, not merely the magic prefix. The magic
+            # LINE must be precisely MAGIC_V2 (``PYDLOCK\x02\n``) — extra bytes
+            # between the version byte and its newline (e.g. an inserted
+            # ``IGNORED``) make this a non-conforming file, not a valid envelope.
+            if not data.startswith(MAGIC_V2):
+
+                raise ValueError("pydlock v2 magic line is not exactly framed.")
+
+            remainder = data[len(MAGIC_V2):]
+
+            # Exactly one separator between the JSON header line and the token.
+            # A missing separator (no newline) is a malformed envelope.
+            header_bytes, separator, token = remainder.partition(b"\n")
+
+            if separator != b"\n":
+
+                raise ValueError(
+                    "pydlock v2 envelope is missing the header/token separator."
+                )
 
             # Bound the raw header BEFORE parsing so a pathologically large
             # header is rejected as corrupt rather than fed to json.loads.
@@ -664,6 +741,19 @@ def _decrypt_data(data     : bytes,
             if not isinstance(header, dict):
 
                 raise ValueError("pydlock header must be a JSON object.")
+
+            # The token must be present and be canonical URL-safe base64. Fernet
+            # base64-decodes with the discard-non-alphabet default, so WITHOUT
+            # this an empty token or trailing garbage (``token + b"!!!"``) would
+            # decode to a valid token and pass. Validate before the (expensive)
+            # key derivation, and re-check that the whole line is a single
+            # separator-free token (an extra ``\n`` puts a newline in the token,
+            # which strict base64 rejects).
+            if not token:
+
+                raise ValueError("pydlock v2 envelope has an empty token.")
+
+            _strict_b64decode(token, urlsafe = True)
 
             key = _derive_key(header, password)
 

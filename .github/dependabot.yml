@@ -1,0 +1,18 @@
+# Dependabot keeps the SHA-pinned GitHub Actions current WITHOUT weakening the
+# pinning: it opens reviewed PRs that advance each `uses:` to a newer verified
+# commit SHA (updating the trailing `# vX.Y.Z` comment to match). Updates are
+# grouped into a single monthly PR to keep the review surface small (fleet
+# repo-best-practices §10c). Security alerts/updates are enabled separately in
+# the repository settings and are not configured here.
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(ci)"

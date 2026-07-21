@@ -57,7 +57,7 @@ only.
 
 ### History / publication blocker: private email across all commits
 
-Every commit is authored and committed by `Erick Shepherd <erickeshepherd@gmail.com>` — the
+Every commit is authored and committed by `Erick Shepherd <<redacted private address>>` — the
 owner's **private** gmail. Leak-guard flags this: it must not become public. Before the repo
 is made public it must be rewritten across **all** history to the GitHub noreply identity
 `24425940+ErickShepherd@users.noreply.github.com`, and the repo-local git config set to the
@@ -170,7 +170,7 @@ rewritten history, and making the repo public all stay owner-gated, outside ever
 
 ### Phase 1 — History hygiene (prerequisite for going public; special step)
 - Rewrite author **and** committer email across the entire history,
-  `erickeshepherd@gmail.com` → `24425940+ErickShepherd@users.noreply.github.com`
+  `<redacted private address>` → `24425940+ErickShepherd@users.noreply.github.com`
   (keep the display name `Erick Shepherd`). Prefer `git filter-repo --mailmap` (or
   `git filter-branch --env-filter` as a dependency-free fallback) over the full commit range.
 - Set repo-local `git config user.email`/`user.name` to the noreply identity so future

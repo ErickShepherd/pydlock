@@ -117,7 +117,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   name to `pydlock`). No stored token — never commit any secret.
 - [x] 11. Write `docs/release-checklist.md` for the **owner-gated tail** (plan §5, design
   §Rollout): the git-history author/committer email rewrite
-  (`erickeshepherd@gmail.com` → `24425940+ErickShepherd@users.noreply.github.com`, display name
+  (`<redacted private address>` → `24425940+ErickShepherd@users.noreply.github.com`, display name
   kept; `git filter-repo --mailmap` or `filter-branch --env-filter` over all history; set
   repo-local `git config` to match; re-run leak-guard) → **force-push** the rewritten history to
   the private remote → **make the repo public** → merge (after the out-of-loop

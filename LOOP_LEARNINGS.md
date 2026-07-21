@@ -229,7 +229,7 @@ progress signal) and **never** a done-signal.
 ## 2026-07-08 — item 11 (owner-gated release-checklist doc)
 
 - Wrote `docs/release-checklist.md` (Markdown, modeled on cosmic's), adding the three steps
-  cosmic didn't have: the **git-history email rewrite** (`erickeshepherd@gmail.com` →
+  cosmic didn't have: the **git-history email rewrite** (`<redacted private address>` →
   `24425940+ErickShepherd@users.noreply.github.com`, display name kept; filter-repo mailmap or
   filter-branch env-filter; set repo-local config; re-run leak-guard), the **force-push** of
   rewritten history to the private remote, and **make-public**. Adapted for pydlock (version

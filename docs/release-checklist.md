@@ -15,7 +15,7 @@ history, changes repository visibility, tags, or publishes.
 
 Every commit in this repository — including the v2 commits made on
 `loop/v2-implementation` — currently carries the owner's **private** email
-(`erickeshepherd@gmail.com`) in its author/committer fields. **That address must
+(`<redacted private address>`) in its author/committer fields. **That address must
 never appear in public history.** Therefore:
 
 - The history rewrite (§3) must cover **all** history, including the merged v2
@@ -74,7 +74,7 @@ Recommended order:
 Scrub the private email from **all** history, keeping the display name. Target:
 
 ```
-erickeshepherd@gmail.com  ->  24425940+ErickShepherd@users.noreply.github.com
+<redacted private address>  ->  24425940+ErickShepherd@users.noreply.github.com
 "Erick Shepherd" (display name)  ->  unchanged
 ```
 
@@ -86,7 +86,7 @@ erickeshepherd@gmail.com  ->  24425940+ErickShepherd@users.noreply.github.com
 - [ ] Rewrite history. Preferred (`git filter-repo`), via a mailmap file
       mapping the old address to the new:
       ```
-      # mailmap:  Erick Shepherd <24425940+ErickShepherd@users.noreply.github.com> <erickeshepherd@gmail.com>
+      # mailmap:  Erick Shepherd <24425940+ErickShepherd@users.noreply.github.com> <<redacted private address>>
       git filter-repo --mailmap mailmap
       ```
       Or, without `filter-repo`, `git filter-branch --env-filter` rewriting

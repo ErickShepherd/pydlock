@@ -52,6 +52,7 @@ Documentation = "https://pydlock.readthedocs.io/en/stable/"
 Source = "https://github.com/ErickShepherd/pydlock"
 Changelog = "https://github.com/ErickShepherd/pydlock/releases"
 Issues = "https://github.com/ErickShepherd/pydlock/issues"
+Security = "https://github.com/ErickShepherd/pydlock/security/policy"
 
 [tool.hatch.version]
 path = "pydlock/constants.py"

@@ -523,21 +523,77 @@ def _derive_legacy_key(password : bytes) -> bytes:
     return urlsafe_b64encode(digest[:32].encode())
 
 
+def _fsync_directory(directory : str) -> bool:
+
+    '''
+
+    Fsyncs a directory entry so a rename into it is durable across a power loss
+    (POSIX). Returns ``True`` when the directory was fsynced, ``False`` when the
+    platform cannot do it — Windows has no directory file descriptor to fsync,
+    and some filesystems reject ``fsync`` on a directory. In the ``False`` case
+    ONLY atomic replacement is established, not full power-loss durability; the
+    caller/docs must not overstate the guarantee. This is a best-effort durability
+    step and never raises: an inability to fsync the directory does not undo the
+    (already completed) atomic replace.
+
+    '''
+
+    # Windows has no O_DIRECTORY / directory-fd fsync; fail honestly.
+    if not hasattr(os, "O_DIRECTORY"):
+
+        return False
+
+    try:
+
+        directory_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY)
+
+    except OSError:
+
+        return False
+
+    try:
+
+        os.fsync(directory_fd)
+
+    except OSError:
+
+        # Some filesystems don't support directory fsync (returns EINVAL, …).
+        return False
+
+    finally:
+
+        os.close(directory_fd)
+
+    return True
+
+
 def _atomic_write(path             : str,
                   data             : bytes,
                   expected_identity : _FileIdentity | None = None) -> None:
 
     '''
 
-    Writes bytes to a path atomically: the data is written to a temp file in
-    the same directory, flushed to disk, then swapped into place with
-    ``os.replace``. An interrupted write can never leave a partially written
-    or truncated file (unlike the previous in-place ``"w+"`` truncate).
+    Writes bytes to a path atomically and — where the platform supports it —
+    durably. The sequence is:
+
+      1. write the data to a temp file in the same directory;
+      2. apply the target's metadata (mode, then best-effort owner/group) to the
+         temp BEFORE the final fsync, so the durable inode already carries them;
+      3. ``fsync`` the temp so the prepared file (data + metadata) is durable;
+      4. revalidate identity (see ``_verify_unchanged``) and ``os.replace`` —
+         the replace happens only after the prepared file is durable;
+      5. ``fsync`` the parent directory so the rename itself is durable.
+
+    Atomicity (an interrupted write never leaves a truncated/partial file) holds
+    on every platform. Full power-loss DURABILITY additionally requires steps 3
+    and 5; step 5 is unavailable on Windows and on some filesystems
+    (``_fsync_directory`` returns ``False`` there), where only atomic replacement
+    is guaranteed. The docs state this precisely rather than claiming uniform
+    crash-safety.
 
     If ``expected_identity`` is supplied, the destination is revalidated against
-    it immediately before the replace (see ``_verify_unchanged``): a concurrent
-    edit or a path swap aborts the write WITHOUT replacing, so newer contents are
-    never overwritten.
+    it immediately before the replace: a concurrent edit or a path swap aborts
+    the write WITHOUT replacing, so newer contents are never overwritten.
 
     '''
 
@@ -552,27 +608,30 @@ def _atomic_write(path             : str,
 
             file.write(data)
             file.flush()
+
+            # Apply metadata BEFORE the final fsync so the durable inode already
+            # carries it. mkstemp creates the temp 0600, so without this the
+            # atomic swap would silently tighten a 0644 target on every
+            # round-trip. chown runs FIRST (a non-privileged chown can clear the
+            # setuid/setgid bits), then copystat sets the mode LAST so those bits
+            # survive. A fresh target keeps the safe 0600 default.
+            if os.path.exists(path):
+
+                try:
+
+                    original = os.stat(path)
+                    os.chown(temporary_path, original.st_uid, original.st_gid)
+
+                except (OSError, AttributeError):
+
+                    # chown typically requires privilege (and os.chown is absent
+                    # on Windows); preserving owner/group is best-effort only.
+                    pass
+
+                shutil.copystat(path, temporary_path)
+
+            # Final fsync AFTER data + metadata: the prepared temp is now durable.
             os.fsync(file.fileno())
-
-        # mkstemp creates the temp file 0600, so without this the atomic swap
-        # would silently tighten the target's permissions on every round-trip.
-        # When the target already exists, copy its mode (and best-effort its
-        # owner/group) onto the temp before the replace, so a 0644 file stays
-        # 0644. A fresh target keeps the safe 0600 default.
-        if os.path.exists(path):
-
-            shutil.copystat(path, temporary_path)
-
-            try:
-
-                original = os.stat(path)
-                os.chown(temporary_path, original.st_uid, original.st_gid)
-
-            except (OSError, AttributeError):
-
-                # chown typically requires privilege (and os.chown is absent on
-                # Windows); preserving owner/group is best-effort only.
-                pass
 
         # Revalidate the destination is still the same unchanged object we read
         # (T1): a concurrent edit or path swap is detected here and aborts the
@@ -581,7 +640,14 @@ def _atomic_write(path             : str,
 
             _verify_unchanged(path, expected_identity)
 
+        # Replace only after the prepared file is durable.
         os.replace(temporary_path, path)
+
+        # Make the rename itself durable where supported (POSIX). On platforms
+        # without directory fsync this is a no-op returning False and only atomic
+        # replacement is guaranteed — the post-replace bytes are already in
+        # place, so this best-effort step never raises.
+        _fsync_directory(directory)
 
     except BaseException:
 

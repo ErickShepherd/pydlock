@@ -66,11 +66,12 @@ format change; every fix is backward compatible.
   `lock`/`unlock` return value, so a failed `unlock` (wrong password) exited `0`
   and scripts could not detect the failure. It now exits `1` on failure.
 
-- **File permissions are preserved across a round-trip.** The atomic write created
-  its temp file `0600` and swapped it into place, silently tightening a `0644`
-  file to owner-only on every lock/unlock. The original file's mode (and
-  best-effort owner/group) is now copied onto the temp before the swap; a newly
-  created file keeps the safe `0600` default.
+- **POSIX file permissions are preserved across a round-trip.** The atomic write
+  created its temp file `0600` and swapped it into place, silently tightening a
+  `0644` file to owner-only on every lock/unlock. On POSIX, the original file's
+  mode (and best-effort owner/group) is now copied onto the temp before the swap;
+  a newly created file keeps the safe `0600` default. Windows does not expose the
+  same Unix permission-bit model.
 
 - **Diagnostics go to stderr with one honest message.** Decrypt diagnostics
   printed to stdout (where decrypted plaintext may be piped) and

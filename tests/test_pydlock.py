@@ -169,6 +169,7 @@ def test_tampered_header_fails_never_wrong_plaintext(tmp_path):
     assert pydlock.decrypt(str(path), password=PASSWORD) is None
 
 
+@pytest.mark.skipif(os.name == "nt", reason="POSIX permission bits unavailable")
 def test_lock_unlock_preserves_file_mode(tmp_path):
 
     # _atomic_write writes via mkstemp (mode 0600) then os.replace, which would

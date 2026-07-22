@@ -78,6 +78,9 @@ include = [
     "/CITATION.cff",
     "/SECURITY.md",
 ]
+exclude = [
+    "/.gitignore",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

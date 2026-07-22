@@ -49,8 +49,9 @@ jobs:
       - name: Verify tag / version / citation / artifact agreement
         # On a release run GITHUB_REF_NAME is the vX.Y.Z tag; the check asserts it
         # equals v<package version> == CITATION version == built artifact version.
-        # A workflow_dispatch run has no tag, so only the internal versions and
-        # artifacts are cross-checked.
+        # On workflow_dispatch GITHUB_REF_NAME is a branch, so the checker uses
+        # GITHUB_REF_TYPE to ignore it and cross-checks only internal versions
+        # and artifacts.
         run: python tools/check_release_consistency.py
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:

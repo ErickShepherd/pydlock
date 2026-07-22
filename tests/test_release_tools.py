@@ -60,3 +60,12 @@ def test_checker_accepts_the_matching_tag():
     exit_code = checker.main(["--tag", good, "--no-artifacts"])
 
     assert exit_code == 0
+
+
+def test_checker_ignores_workflow_dispatch_branch_ref(monkeypatch):
+
+    checker = _load_checker()
+    monkeypatch.setenv("GITHUB_REF_TYPE", "branch")
+    monkeypatch.setenv("GITHUB_REF_NAME", "fix/v2.0.7-release-ready")
+
+    assert checker.main(["--no-artifacts"]) == 0

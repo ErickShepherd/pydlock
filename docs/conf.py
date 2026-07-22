@@ -38,6 +38,11 @@ autodoc_mock_imports = ["cryptography"]
 autodoc_member_order = "bysource"
 autodoc_typehints    = "description"
 
+# Generate slug anchors for Markdown headings (levels 1-3) so the README's
+# intra-page links (e.g. [Security boundaries](#security-boundaries)) resolve in
+# the Sphinx build exactly as they do on GitHub/PyPI.
+myst_heading_anchors = 3
+
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),
 }

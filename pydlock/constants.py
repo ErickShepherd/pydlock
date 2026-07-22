@@ -8,11 +8,11 @@ Defines package constants.
 
 Software:      Pydlock
 Author:        Erick Edward Shepherd
-E-mail:        Contact@ErickShepherd.com
+E-mail:        dev@erickshepherd.com
 GitHub:        https://www.github.com/ErickShepherd/pydlock
 PyPI:          https://pypi.org/project/pydlock/
 Date created:  2020-04-30
-Last modified: 2026-07-08
+Last modified: 2026-07-21
 
 
 Description:
@@ -34,4 +34,4 @@ __author__  = AUTHOR
 # Single source of truth for the package version (SemVer, https://semver.org/).
 # Read at runtime as ``pydlock.__version__`` and at build time by hatchling
 # (``[tool.hatch.version] path = "pydlock/constants.py"`` in pyproject.toml).
-__version__ = "2.0.6"
+__version__ = "2.0.7"

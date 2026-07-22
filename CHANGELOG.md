@@ -66,11 +66,12 @@ format change; every fix is backward compatible.
   `lock`/`unlock` return value, so a failed `unlock` (wrong password) exited `0`
   and scripts could not detect the failure. It now exits `1` on failure.
 
-- **File permissions are preserved across a round-trip.** The atomic write created
-  its temp file `0600` and swapped it into place, silently tightening a `0644`
-  file to owner-only on every lock/unlock. The original file's mode (and
-  best-effort owner/group) is now copied onto the temp before the swap; a newly
-  created file keeps the safe `0600` default.
+- **POSIX file permissions are preserved across a round-trip.** The atomic write
+  created its temp file `0600` and swapped it into place, silently tightening a
+  `0644` file to owner-only on every lock/unlock. On POSIX, the original file's
+  mode (and best-effort owner/group) is now copied onto the temp before the swap;
+  a newly created file keeps the safe `0600` default. Windows does not expose the
+  same Unix permission-bit model.
 
 - **Diagnostics go to stderr with one honest message.** Decrypt diagnostics
   printed to stdout (where decrypted plaintext may be piped) and
@@ -142,6 +143,60 @@ Branding and packaging-metadata polish — no code changes.
   now points at the released docs (`/en/stable/` rather than `/en/latest/`),
   added a `Changelog` link to the GitHub releases, and renamed `Bug Tracker`
   to `Issues`.
+
+## 2026-07-21 - Version 2.0.7
+
+Security and release-compliance patch. **No on-disk format change** — files
+locked by pydlock 2.0.x and the legacy v1 format still decrypt byte-for-byte.
+
+- **Security: reject symlinks, hard links, and non-regular files.** `lock` and
+  `unlock` now operate only on an existing, singly-linked regular file. A symlink
+  or hard-linked target used to be replaced by renaming a fresh inode over the
+  path, leaving the plaintext reachable through the other name and reporting
+  success; these are now rejected with a clear, non-zero error.
+
+- **Security: detect concurrent edits before replacement.** The file's identity
+  is snapshotted when it is read and revalidated immediately before the atomic
+  replace, so an observed concurrent write or path swap aborts instead of
+  clobbering newer contents. A small check-to-replace window remains because
+  portable filesystems provide no rename-if-unchanged operation.
+
+- **Security: strict v2 envelope parsing.** Exact magic-line framing, exactly one
+  header/token separator, canonical base64 for the salt and token, the promised
+  salt length, and a non-empty token are now required. Two modified-envelope
+  inputs that previously decrypted — bytes inserted on the magic line, and
+  trailing garbage after the token — are now rejected. Oversized v2 headers are
+  rejected from a bounded prefix before the remaining hostile file is read.
+  Fernet still authenticates the plaintext/ciphertext; full byte-authentication
+  of an arbitrary envelope layout is a possible format-v3 question, not part of
+  this patch.
+
+- **Security: reject empty passwords on encryption.** `lock`/`encrypt` refuse an
+  empty password (which adds no protection); decryption still accepts an empty
+  password so a pre-existing empty-password file can be recovered.
+
+- **Durability: complete the write sequence.** Metadata is applied before the
+  final file fsync, the replace happens only after the prepared file is durable,
+  and the parent directory is fsynced after the replace on POSIX. On platforms
+  without directory fsync (e.g. Windows) only atomic replacement is guaranteed;
+  the docs now state atomicity vs power-loss durability precisely instead of a
+  blanket "crash-safe".
+
+- **Docs: honest security boundary.** A new "Security boundaries" section in the
+  README corrects the tamper-detection, link/concurrency, durability, Fernet
+  creation-timestamp / ciphertext-size metadata, and whole-file-in-memory claims.
+
+- **CLI: friendly errors and `--version`.** Expected failures (missing file, a
+  symlink/hard-linked/non-regular target, a permission error, an unknown
+  encoding, an empty password) now print a one-line `pydlock: …` diagnostic and
+  exit non-zero without a traceback. Added `--version`.
+
+- **Release/privacy hardening.** Redacted a private address from tracked internal
+  prose (published history intentionally not rewritten); restricted the source
+  distribution to the intentional source-release set; added a privacy guard,
+  SHA-pinned the publish workflow's GitHub Actions, added Dependabot, clean-install
+  smoke tests for the wheel and sdist, a release tag/version/citation/artifact
+  agreement check, Windows + macOS CI coverage, and a `SECURITY.md`.
 
 ## 2026-07-08 - Version 2.0.0
 

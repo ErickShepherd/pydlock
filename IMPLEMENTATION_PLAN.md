@@ -48,7 +48,7 @@ e.g. `feat: scrypt KDF + versioned envelope (item 3)`.
   add SPDX `license = "MIT"` in `pyproject.toml`; keep the MIT `LICENSE` file; replace the
   duplicated ~30-line MIT block atop each source file (`__init__.py`, `__main__.py`,
   `constants.py`) with a one-line `# SPDX-License-Identifier: MIT` header (keep the short
-  authorship/contact docstring — the public `Contact@ErickShepherd.com` is intended and stays).
+  authorship/contact docstring — the public `dev@erickshepherd.com` address is intended and stays).
   Refresh `.gitignore` / `MANIFEST.in` for build artifacts (`dist/`, `*.egg-info/`,
   `.pytest_cache/`). `verify: pip install -e . && python -c "import pydlock"`
 

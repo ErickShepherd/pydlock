@@ -14,7 +14,7 @@ DOI citing the wrong version). This runs in the publish workflow before upload.
 
 Usage:
 
-    # tag from an explicit flag or from $GITHUB_REF_NAME (e.g. a release run)
+    # tag from an explicit flag or from a GitHub tag ref (e.g. a release run)
     python tools/check_release_consistency.py --tag v2.0.7
     python tools/check_release_consistency.py            # reads GITHUB_REF_NAME
 
@@ -91,7 +91,9 @@ def _artifact_versions(dist_dir: Path) -> dict[str, str]:
 def main(argv: list[str] | None = None) -> int:
 
     parser = argparse.ArgumentParser(description="Release-consistency gate.")
-    parser.add_argument("--tag", default=os.environ.get("GITHUB_REF_NAME", ""))
+    github_tag = (os.environ.get("GITHUB_REF_NAME", "")
+                  if os.environ.get("GITHUB_REF_TYPE") == "tag" else "")
+    parser.add_argument("--tag", default=github_tag)
     parser.add_argument("--dist-dir", default="dist")
     parser.add_argument("--no-artifacts", action="store_true",
                         help="skip the built-artifact version check")

@@ -154,18 +154,21 @@ locked by pydlock 2.0.x and the legacy v1 format still decrypt byte-for-byte.
   path, leaving the plaintext reachable through the other name and reporting
   success; these are now rejected with a clear, non-zero error.
 
-- **Security: never overwrite a concurrent edit.** The file's identity is
-  snapshotted when it is read and revalidated immediately before the atomic
-  replace, so a concurrent write or a path swap aborts the operation instead of
-  clobbering newer contents.
+- **Security: detect concurrent edits before replacement.** The file's identity
+  is snapshotted when it is read and revalidated immediately before the atomic
+  replace, so an observed concurrent write or path swap aborts instead of
+  clobbering newer contents. A small check-to-replace window remains because
+  portable filesystems provide no rename-if-unchanged operation.
 
 - **Security: strict v2 envelope parsing.** Exact magic-line framing, exactly one
   header/token separator, canonical base64 for the salt and token, the promised
   salt length, and a non-empty token are now required. Two modified-envelope
   inputs that previously decrypted — bytes inserted on the magic line, and
-  trailing garbage after the token — are now rejected. Fernet still authenticates
-  the plaintext/ciphertext; full byte-authentication of an arbitrary envelope
-  layout is a possible format-v3 question, not part of this patch.
+  trailing garbage after the token — are now rejected. Oversized v2 headers are
+  rejected from a bounded prefix before the remaining hostile file is read.
+  Fernet still authenticates the plaintext/ciphertext; full byte-authentication
+  of an arbitrary envelope layout is a possible format-v3 question, not part of
+  this patch.
 
 - **Security: reject empty passwords on encryption.** `lock`/`encrypt` refuse an
   empty password (which adds no protection); decryption still accepts an empty

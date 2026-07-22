@@ -179,6 +179,32 @@ def test_noncanonical_token_padding_rejected(tmp_path):
     assert plaintext is None
 
 
+def test_oversized_header_is_rejected_before_whole_file_read(
+        tmp_path, monkeypatch, capsys):
+
+    path = tmp_path / "oversized-header.locked"
+    path.write_bytes(
+        MAGIC
+        + b"x" * (pydlock.MAX_HEADER_BYTES + 1)
+        + b"unread-attacker-controlled-tail" * 100_000
+    )
+
+    original_read_all = pydlock._read_all
+    whole_file_reads = 0
+
+    def observing_read_all(file_descriptor):
+
+        nonlocal whole_file_reads
+        whole_file_reads += 1
+        return original_read_all(file_descriptor)
+
+    monkeypatch.setattr(pydlock, "_read_all", observing_read_all)
+
+    assert pydlock.decrypt(path, password=PASSWORD) is None
+    assert whole_file_reads == 0
+    assert "wrong password or corrupt file" in capsys.readouterr().err
+
+
 # --- decrypt failure never mutates the input ---------------------------------
 
 

@@ -181,14 +181,78 @@ def _read_all(file_descriptor : int) -> bytes:
     return b"".join(chunks)
 
 
-def _open_and_read_regular(path : str) -> tuple[_FileIdentity, bytes]:
+def _read_decrypt_input(file_descriptor : int) -> bytes:
 
     '''
 
-    Opens ``path``, enforces the filesystem-safety contract, reads it, and
-    returns ``(_FileIdentity, contents)``. The identity is taken from the SAME
-    descriptor the contents are read from, so there is no re-open race between
-    the type/link checks and the read.
+    Reads a prospective pydlock file without first accepting an unbounded v2
+    header into memory. Legacy v1 tokens still require a whole-file read, as do
+    valid v2 Fernet tokens, but a file beginning with the v2 magic is consumed
+    only through ``MAX_HEADER_BYTES + 1`` header bytes until its separator is
+    found. A malformed magic line or oversized/missing-separator header is
+    returned in its bounded form for ``_decrypt_data`` to reject cleanly.
+
+    '''
+
+    prefix = bytearray()
+
+    while len(prefix) < len(MAGIC_PREFIX):
+
+        chunk = os.read(file_descriptor, len(MAGIC_PREFIX) - len(prefix))
+
+        if not chunk:
+
+            break
+
+        prefix.extend(chunk)
+
+    if bytes(prefix) != MAGIC_PREFIX:
+
+        return bytes(prefix) + _read_all(file_descriptor)
+
+    magic_terminator = os.read(file_descriptor, 1)
+
+    if magic_terminator != b"\n":
+
+        return bytes(prefix) + magic_terminator
+
+    header = bytearray()
+
+    while len(header) <= MAX_HEADER_BYTES:
+
+        remaining = MAX_HEADER_BYTES + 1 - len(header)
+        chunk = os.read(file_descriptor, min(1 << 12, remaining))
+
+        if not chunk:
+
+            return MAGIC_V2 + bytes(header)
+
+        separator_at = chunk.find(b"\n")
+
+        if separator_at >= 0:
+
+            header.extend(chunk[:separator_at])
+            token_prefix = chunk[separator_at + 1:]
+
+            return (MAGIC_V2 + bytes(header) + b"\n" + token_prefix
+                    + _read_all(file_descriptor))
+
+        header.extend(chunk)
+
+    return MAGIC_V2 + bytes(header)
+
+
+def _open_and_read_regular(path   : str,
+                           reader = _read_all) -> tuple[_FileIdentity, bytes]:
+
+    '''
+
+    Opens ``path``, enforces the filesystem-safety contract, reads it with
+    ``reader``, and returns ``(_FileIdentity, contents)``. The identity is taken
+    from the SAME descriptor the contents are read from, so there is no re-open
+    race between the type/link checks and the read. The default reader consumes
+    the whole file; decrypt/unlock supply ``_read_decrypt_input`` so an invalid
+    v2 header is bounded before the whole Fernet token is read.
 
     Rejections (all raise ``UnsupportedFileTypeError``):
 
@@ -255,7 +319,7 @@ def _open_and_read_regular(path : str) -> tuple[_FileIdentity, bytes]:
                 f"one name while the plaintext stays reachable through another."
             )
 
-        contents = _read_all(file_descriptor)
+        contents = reader(file_descriptor)
 
         identity = _FileIdentity(info.st_dev, info.st_ino,
                                  info.st_size, info.st_mtime_ns)
@@ -901,7 +965,7 @@ def decrypt(path     : str,
 
     '''
 
-    _, data = _open_and_read_regular(path)
+    _, data = _open_and_read_regular(path, _read_decrypt_input)
 
     return _decrypt_data(data, encoding, password)
 
@@ -944,7 +1008,7 @@ def unlock(path     : str,
 
     '''
 
-    identity, data = _open_and_read_regular(path)
+    identity, data = _open_and_read_regular(path, _read_decrypt_input)
 
     contents = _decrypt_data(data, encoding, password)
 

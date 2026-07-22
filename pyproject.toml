@@ -60,14 +60,14 @@ path = "pydlock/constants.py"
 [tool.hatch.build.targets.wheel]
 packages = ["pydlock"]
 
-# The source distribution ships ONLY the intentional source-release set: the
-# package, its offline test suite, and the top-level project/legal/security
-# metadata. Internal development artifacts — implementation plans, loop-learning
-# records, audit ledgers, design notes, the release runbook, the Sphinx docs
-# tree, and the development-only brand sources (large PNGs + a vendored TTF) —
-# are deliberately EXCLUDED so they are never distributed with the package. This
-# is an allowlist (`include`): anything not named here is left out of the sdist,
-# so a newly added internal file cannot silently start shipping.
+# The source payload is limited to the intentional release set: the package, its
+# offline test suite, and the top-level project/legal/security metadata. Hatchling
+# additionally injects the build/reproducibility files required by an sdist
+# (`pyproject.toml`, generated `PKG-INFO`, and the VCS ignore file it used for file
+# selection). Internal development artifacts — implementation plans, loop-learning
+# records, audit ledgers, design notes, the release runbook, the Sphinx docs tree,
+# and development-only brand sources — are deliberately excluded. This is an
+# allowlist (`include`), so a newly added internal file cannot silently ship.
 [tool.hatch.build.targets.sdist]
 include = [
     "/pydlock",
@@ -77,9 +77,6 @@ include = [
     "/CHANGELOG.md",
     "/CITATION.cff",
     "/SECURITY.md",
-]
-exclude = [
-    "/.gitignore",
 ]
 
 [tool.pytest.ini_options]

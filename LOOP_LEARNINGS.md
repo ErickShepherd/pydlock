@@ -48,7 +48,7 @@ progress signal) and **never** a done-signal.
   scratchpad `spdx.py`), not fragile Edit string-matching — the docstrings had trailing
   whitespace on "blank" lines. Pattern removed `Copyright:`→`...DEALINGS IN THE SOFTWARE.` and
   inserted `# SPDX-License-Identifier: MIT` after the coding line. Kept each file's short
-  authorship/contact docstring (incl. the intended public `Contact@ErickShepherd.com`).
+  authorship/contact docstring (incl. the intended public `dev@erickshepherd.com`).
 - **In scope only:** left `__main__.py`'s stale "Notes: Windows executables corrupt" docstring
   and the `python`/`run` usage text untouched — the corruption fix is item 4, the CLI reduction
   + docstring-typo fix is item 6. Did not touch them here.
@@ -229,7 +229,7 @@ progress signal) and **never** a done-signal.
 ## 2026-07-08 — item 11 (owner-gated release-checklist doc)
 
 - Wrote `docs/release-checklist.md` (Markdown, modeled on cosmic's), adding the three steps
-  cosmic didn't have: the **git-history email rewrite** (`erickeshepherd@gmail.com` →
+  cosmic didn't have: the **git-history email rewrite** (`<redacted private address>` →
   `24425940+ErickShepherd@users.noreply.github.com`, display name kept; filter-repo mailmap or
   filter-branch env-filter; set repo-local config; re-run leak-guard), the **force-push** of
   rewritten history to the private remote, and **make-public**. Adapted for pydlock (version

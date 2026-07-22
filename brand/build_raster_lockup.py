@@ -2,7 +2,7 @@
 """Compose horizontal RASTER lockups from the approved source mark tile + the typeset wordmark.
 
 This is the interim, ship-now lockup: it embeds the trusted ``pydlock-logo.png`` mark AS RASTER
-(vector versions are deferred until limner can trace the flat art) rather than a vector mark. The
+(vector versions are deferred until the flat art can be traced) rather than a vector mark. The
 wordmark is a true-vector glyph outline (Sora SemiBold), rasterized here only for a single flat PNG.
 Geometry mirrors ncarnate's ``build_raster_lockup.py`` so the house lockups stay consistent.
 

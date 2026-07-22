@@ -9,7 +9,7 @@ description = "Dead-simple password-based file encryption for the command line a
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-    { name = "Erick Shepherd", email = "Contact@ErickShepherd.com" },
+    { name = "Erick Shepherd", email = "dev@erickshepherd.com" },
 ]
 license = "MIT"
 license-files = ["LICENSE"]
@@ -52,12 +52,32 @@ Documentation = "https://pydlock.readthedocs.io/en/stable/"
 Source = "https://github.com/ErickShepherd/pydlock"
 Changelog = "https://github.com/ErickShepherd/pydlock/releases"
 Issues = "https://github.com/ErickShepherd/pydlock/issues"
+Security = "https://github.com/ErickShepherd/pydlock/security/policy"
 
 [tool.hatch.version]
 path = "pydlock/constants.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["pydlock"]
+
+# The source payload is limited to the intentional release set: the package, its
+# offline test suite, and the top-level project/legal/security metadata. Hatchling
+# additionally injects the build/reproducibility files required by an sdist
+# (`pyproject.toml`, generated `PKG-INFO`, and the VCS ignore file it used for file
+# selection). Internal development artifacts — implementation plans, loop-learning
+# records, audit ledgers, design notes, the release runbook, the Sphinx docs tree,
+# and development-only brand sources — are deliberately excluded. This is an
+# allowlist (`include`), so a newly added internal file cannot silently ship.
+[tool.hatch.build.targets.sdist]
+include = [
+    "/pydlock",
+    "/tests",
+    "/README.md",
+    "/LICENSE",
+    "/CHANGELOG.md",
+    "/CITATION.cff",
+    "/SECURITY.md",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

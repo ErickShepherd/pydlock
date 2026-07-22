@@ -17,7 +17,10 @@ product. It can be used from the command line or imported as a Python package.
 
 As of **2.0** your password is protected with a salted, memory-hard **scrypt**
 key derivation, files of *any* kind (including binaries and Windows executables)
-round-trip losslessly, and writes are crash-safe.
+round-trip losslessly, and writes are atomic — an interrupted lock or unlock
+never leaves a truncated or half-written file (see
+[Security boundaries](#security-boundaries) for the precise durability and
+integrity guarantees).
 
 ## Problems this solves
 
@@ -32,7 +35,8 @@ Reach for pydlock if you are trying to:
   own scheme — pydlock uses salted, memory-hard **scrypt** and authenticated
   **Fernet** (AES-128-CBC + HMAC-SHA256), and adds no custom cryptography.
 - **Encrypt binaries safely** — files of any kind round-trip byte-for-byte, and
-  writes are crash-safe (atomic replace).
+  writes are atomic (a fresh file is prepared and swapped into place, so an
+  interrupted operation never truncates your data).
 
 ## Installation
 
@@ -69,7 +73,7 @@ The `pydlock` console command (installed with the package) and
 
 ```console
 user@computer:~$ pydlock -h
-usage: pydlock [-h] [--encoding ENCODING] {lock,unlock,encrypt,decrypt} file
+usage: pydlock [-h] [--version] [--encoding ENCODING] {lock,unlock,encrypt,decrypt} file
 
 positional arguments:
     {lock,unlock,encrypt,decrypt}
@@ -77,6 +81,7 @@ positional arguments:
 
 options:
     -h, --help           show this help message and exit
+    --version            show the version and exit
     --encoding ENCODING
 ```
 
@@ -106,7 +111,9 @@ Shh! It's a secret!
 
 An entered-but-wrong password fails cleanly — pydlock prints
 `Could not decrypt (wrong password or corrupt file).` and leaves the encrypted
-file untouched.
+file untouched. Other expected problems (a missing file, a symlink or
+hard-linked target, a permission error) print a one-line `pydlock: …` diagnostic
+and exit non-zero, without a traceback.
 
 ### In other Python modules
 
@@ -138,9 +145,11 @@ Highlights:
 - **Binary files are safe.** Files are read and written as raw bytes, so binary
   files and Windows executables round-trip losslessly. Earlier versions
   corrupted them; that bug is fixed.
-- **Crash-safe writes.** Locking and unlocking write to a temporary file and
+- **Atomic writes.** Locking and unlocking write to a temporary file and
   atomically replace the original, so an interrupted operation can never leave a
-  truncated or half-written file.
+  truncated or half-written file. On POSIX the file and its parent directory are
+  fsynced so the replacement is also durable across a power loss; see
+  [Security boundaries](#security-boundaries) for the per-platform guarantee.
 - **`encrypt` / `decrypt` aliases** for `lock` / `unlock`.
 - **`python` and `run` removed.** The old decrypt-and-execute subcommands were a
   security footgun (arbitrary code execution) and outside the scope of a
@@ -179,9 +188,53 @@ ciphertext.
 The file itself is encrypted with
 [Fernet](https://cryptography.io/en/latest/fernet/) (AES-128 in CBC mode with an
 HMAC-SHA256 authentication tag) from the well-vetted `cryptography` library.
-Because the token is authenticated, a wrong password or any tampering with the
-file is detected and rejected — pydlock never returns silently-wrong plaintext.
-pydlock adds no custom cryptography of its own.
+Because the token is authenticated, a wrong password, a corrupted token, or any
+modification of the encrypted contents is detected and rejected — pydlock never
+returns silently-wrong plaintext. pydlock adds no custom cryptography of its own.
+
+Use a strong passphrase: scrypt makes guessing expensive, but it cannot add
+entropy to a weak or empty one. pydlock refuses to encrypt with an empty
+password.
+
+## Security boundaries
+
+pydlock is deliberately small. Knowing exactly what it does and does not
+guarantee lets you use it safely.
+
+- **What is authenticated.** The plaintext and the ciphertext are authenticated
+  by Fernet's HMAC, and the v2 envelope is parsed strictly (exact framing,
+  canonical base64, the promised salt length), so a wrong password or a modified
+  token/header is rejected rather than returning wrong plaintext. This is *not* a
+  byte-for-byte signature over an arbitrary presentation of the file: Fernet has
+  no additional-authenticated-data channel, so pydlock authenticates the
+  plaintext and ciphertext and validates the envelope grammar, rather than
+  claiming every possible byte layout is signed.
+- **Regular files only; no aliases.** `lock` and `unlock` operate only on an
+  existing, singly-linked regular file. A **symlink**, a **hard-linked** file
+  (`st_nlink != 1`), or a non-regular file (directory, device, FIFO) is
+  **rejected** with a non-zero exit, because pydlock replaces a file by renaming
+  a new inode over the path — which would encrypt one name while leaving the
+  plaintext reachable through the other. Resolve the symlink yourself and pass the
+  real target if that is what you meant.
+- **Concurrent edits are not clobbered.** pydlock snapshots the file's identity
+  when it reads it and revalidates immediately before replacing it. If the file
+  changed on disk in between (a concurrent writer, or a path swap), the operation
+  aborts without overwriting the newer contents. A small time window between the
+  check and the replace is unavoidable; pydlock is not a substitute for a file
+  lock in a heavily concurrent workflow.
+- **Atomic everywhere; durable on POSIX.** The replace is atomic on every
+  platform (no truncated/partial file). Full **power-loss durability**
+  additionally requires fsyncing the parent directory, which pydlock does on
+  POSIX; on Windows and on filesystems that do not support directory fsync, only
+  atomic replacement is guaranteed, not durability across a sudden power loss.
+- **Metadata Fernet exposes.** A Fernet token embeds the **creation timestamp in
+  cleartext** (it is authenticated, not hidden), so an observer can read when a
+  file was locked. The ciphertext length also reveals the approximate plaintext
+  size. pydlock does not pad or hide either.
+- **Whole-file, in-memory.** pydlock reads the entire file into memory and Fernet
+  requires the whole message at once, so inputs must fit comfortably in RAM.
+  Fernet is not intended for very large files; a streaming format is explicitly
+  out of scope for pydlock.
 
 ## Copyright and License
 

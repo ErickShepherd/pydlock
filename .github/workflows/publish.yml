@@ -26,13 +26,19 @@ on:
 permissions:
   contents: read
 
+# These jobs hold the PyPI OIDC trust boundary (`id-token: write`), so every
+# third-party Action is pinned to a full, verified commit SHA — the only
+# immutable Action reference (a moved or compromised upstream tag can otherwise
+# change code in the release path without a pydlock commit). The trailing
+# `# vX.Y.Z` comment is readability only; Dependabot advances the SHAs via
+# reviewed PRs (.github/dependabot.yml). See repo-best-practices §5/§7d.
 jobs:
   build:
     name: Build sdist + wheel
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
           python-version: "3.12"
       - name: Build
@@ -40,7 +46,14 @@ jobs:
           python -m pip install --upgrade build twine
           python -m build
           python -m twine check dist/*
-      - uses: actions/upload-artifact@v4
+      - name: Verify tag / version / citation / artifact agreement
+        # On a release run GITHUB_REF_NAME is the vX.Y.Z tag; the check asserts it
+        # equals v<package version> == CITATION version == built artifact version.
+        # On workflow_dispatch GITHUB_REF_NAME is a branch, so the checker uses
+        # GITHUB_REF_TYPE to ignore it and cross-checks only internal versions
+        # and artifacts.
+        run: python tools/check_release_consistency.py
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: dist
           path: dist/
@@ -54,11 +67,11 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1
         with:
           repository-url: https://test.pypi.org/legacy/
           skip-existing: true  # re-dispatching a dry run for an existing version won't fail
@@ -72,8 +85,8 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@ba38be9e461d3875417946c167d0b5f3d385a247 # v1.14.1

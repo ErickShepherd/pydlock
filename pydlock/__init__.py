@@ -266,12 +266,25 @@ def _open_and_read_regular(path   : str,
 
     '''
 
-    # Windows lacks O_NOFOLLOW; pre-check for a symlink (best-effort, racy).
-    if not _HAS_O_NOFOLLOW and os.path.islink(path):
+    # Windows lacks O_NOFOLLOW and rejects opening a directory with EACCES before
+    # fstat can classify it. Use one best-effort lstat preflight there for both
+    # cases; the descriptor-based authoritative regular-file/link-count checks
+    # below still protect the object that was actually opened.
+    if not _HAS_O_NOFOLLOW:
 
-        raise UnsupportedFileTypeError(
-            f"{path!r} is a symlink; refusing to operate through it."
-        )
+        preliminary = os.lstat(path)
+
+        if stat.S_ISLNK(preliminary.st_mode):
+
+            raise UnsupportedFileTypeError(
+                f"{path!r} is a symlink; refusing to operate through it."
+            )
+
+        if not stat.S_ISREG(preliminary.st_mode):
+
+            raise UnsupportedFileTypeError(
+                f"{path!r} is not a regular file; refusing to operate on it."
+            )
 
     # O_BINARY: no newline translation on Windows. O_NONBLOCK: opening a FIFO or
     # device read-only would otherwise BLOCK waiting for a peer; with it the open
